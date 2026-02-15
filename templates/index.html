@@ -208,10 +208,6 @@
       .road-lines, .road-glow { animation: none; }
       .car-dot { animation: none; opacity: 0; }
     }
-    /* Pause background animation when results are shown to keep scrolling smooth */
-    body.has-results .road-lines,
-    body.has-results .road-glow { animation: none; }
-    body.has-results .car-dot { animation: none; opacity: 0.5; }
     body > * { position: relative; z-index: 1; }
     body { max-width: 1180px; margin: 0 auto; padding: 0 24px 56px; }
     .grid-bg { display: none; }
@@ -970,10 +966,10 @@
       <div class="load-h" id="load-h">Analyzing...</div>
       <div class="load-p" id="load-p">Running perception pipeline</div>
       <div class="load-steps">
-        <div class="l-step" id="ls-1"><div class="l-num">1</div><div class="l-txt">Uploading file</div><div class="l-spin"></div></div>
-        <div class="l-step" id="ls-2"><div class="l-num">2</div><div class="l-txt">YOLO object detection</div><div class="l-spin"></div></div>
-        <div class="l-step" id="ls-3"><div class="l-num">3</div><div class="l-txt">Scene classification & CO2</div><div class="l-spin"></div></div>
-        <div class="l-step" id="ls-4"><div class="l-num">4</div><div class="l-txt">Rendering output</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-1"><div class="l-num">1</div><div class="l-txt">Uploading video</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-2"><div class="l-num">2</div><div class="l-txt">Running object detection (YOLO)</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-3"><div class="l-num">3</div><div class="l-txt">Computing eco scores & trip summary</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-4"><div class="l-num">4</div><div class="l-txt">Finalizing annotated video</div><div class="l-spin"></div></div>
       </div>
       <div class="load-track"><div class="load-fill" id="load-fill"></div></div>
       <div class="load-time" id="load-time">0s</div>
@@ -1004,32 +1000,48 @@
         tEl=document.getElementById('load-time'), fIn=document.getElementById('file-input'),
         hEl=document.getElementById('load-h'), pEl=document.getElementById('load-p'),
         ids=['ls-1','ls-2','ls-3','ls-4'];
+    var stepSubtitles=[
+      'Saving your file to the server…',
+      'Detecting cars, people, traffic lights frame by frame…',
+      'Classifying scenes and estimating CO₂ impact…',
+      'Writing annotated video and summary…'
+    ];
     function setS(n){
       for(var i=0;i<ids.length;i++){
         var e=document.getElementById(ids[i]),d=e.querySelector('.l-num');
         e.className='l-step'+(i<n?' ok':(i===n?' now':''));
         if(i<n)d.textContent='\u2713';
       }
+      if(pEl&&stepSubtitles[n])pEl.textContent=stepSubtitles[n];
+    }
+    // Cycle through all 4 steps in ~35s to match typical analysis time; then hold
+    function progressFromElapsed(sec){
+      if(sec<=2) return (sec/2)*8;
+      if(sec<=20) return 8+(sec-2)/18*57;
+      if(sec<=27) return 65+(sec-20)/7*20;
+      if(sec<=35) return 85+(sec-27)/8*12;
+      return Math.min(97, 97+(sec-35)*0.08);
+    }
+    function stepFromProgress(p){
+      if(p<8)return 0; if(p<65)return 1; if(p<85)return 2; if(p<97)return 3; return 4;
     }
     form.addEventListener('submit',function(){
       var f=fIn.files[0]; if(!f)return;
-      hEl.textContent='Analyzing video...';
-      pEl.textContent='Processing frames through perception pipeline';
-      btn.disabled=true; btn.textContent='Processing...';
+      hEl.textContent='Analyzing video…';
+      pEl.textContent=stepSubtitles[0];
+      btn.disabled=true; btn.textContent='Processing…';
       ov.classList.add('on');
-      var t0=Date.now(), ts=[1200,7000,13000,17000], cur=0;
-      setS(0); fill.style.width='4%';
-      function adv(){
-        if(cur>=ids.length)return;
-        var d=ts[cur]-(cur?ts[cur-1]:0);
-        setTimeout(function(){cur++;if(cur<ids.length){setS(cur);fill.style.width=Math.min(85,cur/ids.length*90)+'%';adv();}else{setS(ids.length);fill.style.width='92%';}},d);
-      }
-      adv();
+      var t0=Date.now(), lastStep=-1;
+      setS(0); fill.style.width='0%';
       window._lt=setInterval(function(){
-        var s=Math.floor((Date.now()-t0)/1000),m=Math.floor(s/60);
+        var elapsed=(Date.now()-t0)/1000;
+        var s=Math.floor(elapsed), m=Math.floor(s/60);
         tEl.textContent=(m?m+'m ':'')+s%60+'s';
-        if(cur>=ids.length){var p=parseFloat(fill.style.width)||92;if(p<98)fill.style.width=(p+0.2)+'%';}
-      },1000);
+        var p=progressFromElapsed(elapsed);
+        var step=stepFromProgress(p);
+        if(step!==lastStep){ setS(step); lastStep=step; }
+        fill.style.width=Math.min(p,98)+'%';
+      },400);
     });
   })();
   </script>
@@ -1092,7 +1104,7 @@
         <div class="media-wrap">
           <span class="media-badge">Annotated</span>
           {% if video_available %}
-          <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}" controls playsinline preload="auto"></video>
+          <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
           <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
             <div class="tl-label">Alerts<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Click a number to jump to that moment in the video and see why we flagged it (risk up, improvement, or CO₂ change).</span></span></div>
