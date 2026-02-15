@@ -4,6 +4,8 @@
 
 EcoRoad AI analyzes dashcam (or any road) video with computer vision and gives you **eco and safety insights** — no car sensors or GPS required. Upload a clip, get an annotated video plus perception counts, scene type, risk level, eco score, CO₂ and fuel estimates, driving style, and actionable tips.
 
+**Demo video:** [Watch on YouTube](https://youtu.be/5TSmRMDbp1Q)
+
 ---
 
 ## What it does
@@ -69,6 +71,7 @@ The app uses a **pre-trained** YOLO model (`yolov8n.pt`). Optional fine-tuning o
 - `ECOROAD_MODEL_PATH` — path to weights (default: `yolov8n.pt`)
 - `ECOROAD_CONF` — detection confidence 0–1 (default: `0.25`)
 - `ECOROAD_DEVICE` — `cuda` or `cpu`
+- `ECOROAD_SAVE_FLOW_VIS` — set to `1` to save a Farneback optical-flow visualization video (GPU/batched runs only). In the app, use the **Detection | Optical flow** toggle to switch the player to the flow view.
 
 ---
 

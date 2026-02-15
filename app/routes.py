@@ -17,7 +17,7 @@ from app.config import (
     TRIP_HISTORY_PATH,
     clear_video_dirs,
 )
-from app.utils import get_annotated_path, get_original_path, send_annotated_response
+from app.utils import get_annotated_path, get_flow_path, get_original_path, send_annotated_response
 
 MAX_HISTORY = 30
 
@@ -239,6 +239,14 @@ def register_routes(app):
         path, mimetype = get_original_path(output_id)
         if path is None or not path.exists():
             return "Not found", 404
+        return send_annotated_response(path, mimetype, False, path.name)
+
+    @app.route("/flow/<int:output_id>")
+    def flow_video(output_id):
+        """Serve Farneback optical flow visualization video (when ECOROAD_SAVE_FLOW_VIS=1)."""
+        path, mimetype = get_flow_path(output_id)
+        if path is None or not path.exists():
+            return "Flow video not available", 404
         return send_annotated_response(path, mimetype, False, path.name)
 
     @app.route("/results/<int:output_id>.json")

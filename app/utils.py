@@ -24,6 +24,18 @@ def get_original_path(output_id):
     return None, None
 
 
+def get_flow_path(output_id):
+    """Return (path, mimetype) for output/flow_<id>.mp4 if it exists (Farneback optical flow vis)."""
+    if output_id is None or not str(output_id).strip().isdigit():
+        return None, None
+    out = OUTPUT_DIR.resolve()
+    oid = str(output_id).strip()
+    p = out / ("flow_" + oid + ".mp4")
+    if p.exists():
+        return p.resolve(), VIDEO_EXT_MIME.get(".mp4", "video/mp4")
+    return None, None
+
+
 def get_annotated_path(output_id):
     """Return (path, mimetype) for output/annotated_<id>.<ext>; id must be digits only.
     When output_id is given, only return the id-specific file so we never serve another run's video.

@@ -1,0 +1,99 @@
+ECOROAD AI — SUBMIT YOUR PROJECT (Shipyard + Elevator Pitch)
+
+Copy/paste or adapt these for your submission forms.
+
+
+ELEVATOR PITCH * (one line)
+
+One line that captures what makes your project special:
+
+  Dashcam in, eco score out. AI analyzes your drive and tells you how to save fuel and cut CO₂ in one sentence.
+
+Alternative options (pick one or tweak):
+  • Upload a clip, get an eco score and coaching. AI powered sustainable driving in one click.
+  • Your dashcam becomes a fuel and safety coach: one upload, instant eco score and tips.
+  • EcoRoad AI turns any dashcam video into an eco score and actionable driving tips.
+
+
+PROJECT INFORMATION (Shipyard)
+
+Project Name:
+  EcoRoad AI
+
+Project Description:
+  EcoRoad AI analyzes dashcam video to score driving efficiency and safety. Upload a short clip and get an eco score (0–100), CO₂ impact, risk level, and time stamped alerts. It uses YOLO for object detection (cars, pedestrians, traffic lights, etc.), infers scene type (highway, urban, residential), and gives tips to drive smoother and use less fuel. Built for SF Hacks 2026 with a focus on climate action and sustainability in education.
+
+Who it's for (from homepage, submission ready):
+
+  Save money
+  Users see exactly where they waste fuel; smoother driving reduces cost at the pump. EcoRoad surfaces inefficiency so drivers can cut fuel spend without changing where they go.
+
+  Prove safe driving
+  Trip scores and risk levels give evidence for usage based insurance, fleet discounts, or employer programs. One dashboard shows eco and safety performance in a shareable way.
+
+  Fleets and families
+  Managers and parents get clear reports; drivers improve without having to care first. The app does the coaching so fleet leads and families can focus on outcomes, not nagging.
+
+One paragraph version (for "Tell us more" or "Additional Details" if you need more):
+  EcoRoad serves three audiences: drivers who want to save money (see where fuel is wasted and cut pump cost), those who need to prove safe driving (trip scores and risk levels for usage based insurance or fleet discounts), and fleets or families (managers and parents get reports while drivers improve without having to care first).
+
+Project Link: (required)
+  [Your repo URL, e.g. https://github.com/yourusername/ecoRoadAI]
+
+Live Project Link: (optional)
+  [Your deployed demo if you have one, e.g. https://ecoroadai.tech]
+
+Categories: (check what fits)
+  [x] Web
+  [x] ML / AI
+  [x] Education
+  [ ] Other (optional; add "Sustainability / Climate" in tell us more if you want)
+
+Tell us more about your categories: (optional)
+  Sustainability & climate (eco driving, CO₂), education (driver coaching), and AI/computer vision (object detection).
+
+Tools: (check only what you used)
+  [x] Python
+  [x] MLH (if you're submitting to MLH or used any MLH tools)
+  [ ] Docker (only if you containerized)
+  [ ] OpenAI (only if you used it)
+  (Do not check tools you didn't use.)
+
+Tell us more about your tools: (optional)
+  Python, Flask, PyTorch, YOLO, OpenCV; optional: CUDA for GPU inference.
+
+
+TEAM
+
+Team Name:
+  [e.g. EcoRoad AI Team or your team name]
+
+Team Members: (optional)
+  [e.g. Your Name, Teammate 2, Teammate 3]
+
+
+PROJECT LINKS
+
+Github Link: (required)
+  [Same as Project Link if that's your repo]
+
+Video Demo Link: (optional)
+  [Loom/YouTube link if you have one]
+
+Other Link: (optional)
+  [Devpost, live demo, or docs]
+
+
+MORE DETAILS
+
+Additional Details: (optional)
+  Built at SF Hacks 2026. Tracks: Best Hack for Climate Action, Best Hack for Sustainability in Education, IBM Integration for AI. Dashcam in, eco score and CO₂ estimate and coaching alerts out.
+
+
+ACTIONS
+
+  Save Draft when not ready to submit
+  Submit Project when everything is filled and you're ready
+
+
+Replace any [bracketed] placeholders with your real links and names.
