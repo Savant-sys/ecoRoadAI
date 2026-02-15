@@ -139,35 +139,41 @@
     }
     .car-dot {
       position: absolute;
-      width: 10px;
-      height: 16px;
-      border-radius: 4px 4px 6px 6px;
-      background: linear-gradient(180deg, rgba(34,197,94,.5) 0%, rgba(34,197,94,.25) 40%, rgba(34,197,94,.12) 100%);
+      width: 20px;
+      height: 10px;
+      border-radius: 6px 4px 4px 6px;
+      background: linear-gradient(90deg, rgba(34,197,94,.5) 0%, rgba(34,197,94,.25) 50%, rgba(34,197,94,.12) 100%);
       border: 1px solid rgba(34,197,94,.35);
       box-shadow:
         0 0 16px rgba(34,197,94,.3),
         0 0 4px rgba(34,197,94,.2),
-        inset 0 1px 0 rgba(255,255,255,.12);
+        inset 1px 0 0 rgba(255,255,255,.12);
       animation: carDriftR 20s linear infinite;
       top: 20%;
     }
     .car-dot.car-left {
       animation-name: carDriftL;
+      border-radius: 4px 6px 6px 4px;
+      background: linear-gradient(90deg, rgba(34,197,94,.12) 0%, rgba(34,197,94,.25) 50%, rgba(34,197,94,.5) 100%);
+      box-shadow:
+        0 0 16px rgba(34,197,94,.3),
+        0 0 4px rgba(34,197,94,.2),
+        inset -1px 0 0 rgba(255,255,255,.12);
     }
     .car-dot:nth-child(5)  { top: 8%;  animation-delay: 0s;   animation-duration: 24s; }
-    .car-dot:nth-child(6)  { top: 18%; animation-delay: -4s;  animation-duration: 19s; width: 8px; height: 13px; opacity: .9; }
-    .car-dot:nth-child(7)  { top: 32%; animation-delay: -8s;  animation-duration: 26s; background: linear-gradient(180deg, rgba(6,182,212,.45), rgba(6,182,212,.2), rgba(6,182,212,.08)); border-color: rgba(6,182,212,.4); box-shadow: 0 0 14px rgba(6,182,212,.28), 0 0 4px rgba(6,182,212,.15), inset 0 1px 0 rgba(255,255,255,.1); }
-    .car-dot:nth-child(8)  { top: 45%; animation-delay: -2s;  animation-duration: 22s; animation-name: carDriftL; width: 7px; height: 12px; opacity: .8; }
+    .car-dot:nth-child(6)  { top: 18%; animation-delay: -4s;  animation-duration: 19s; width: 16px; height: 8px; opacity: .9; }
+    .car-dot:nth-child(7)  { top: 32%; animation-delay: -8s;  animation-duration: 26s; background: linear-gradient(90deg, rgba(6,182,212,.45), rgba(6,182,212,.2), rgba(6,182,212,.08)); border-color: rgba(6,182,212,.4); box-shadow: 0 0 14px rgba(6,182,212,.28), 0 0 4px rgba(6,182,212,.15), inset 1px 0 0 rgba(255,255,255,.1); }
+    .car-dot:nth-child(8)  { top: 45%; animation-delay: -2s;  animation-duration: 22s; animation-name: carDriftL; width: 14px; height: 7px; opacity: .8; }
     .car-dot:nth-child(9)  { top: 58%; animation-delay: -11s; animation-duration: 28s; animation-name: carDriftL; }
-    .car-dot:nth-child(10) { top: 70%; animation-delay: -6s;  animation-duration: 21s; background: linear-gradient(180deg, rgba(6,182,212,.4), rgba(6,182,212,.15), rgba(6,182,212,.06)); border-color: rgba(6,182,212,.35); box-shadow: 0 0 12px rgba(6,182,212,.22), inset 0 1px 0 rgba(255,255,255,.08); }
-    .car-dot:nth-child(11) { top: 82%; animation-delay: -15s; animation-duration: 25s; animation-name: carDriftL; width: 8px; height: 14px; opacity: .85; }
-    .car-dot:nth-child(12) { top: 12%; animation-delay: -9s;  animation-duration: 23s; animation-name: carDriftL; width: 9px; height: 14px; opacity: .75; background: linear-gradient(180deg, rgba(34,197,94,.4), rgba(34,197,94,.15)); border-color: rgba(34,197,94,.3); }
-    .car-dot:nth-child(13) { top: 25%; animation-delay: -13s; animation-duration: 20s; width: 7px; height: 11px; opacity: .7; }
-    .car-dot:nth-child(14) { top: 38%; animation-delay: -5s;  animation-duration: 27s; animation-name: carDriftL; background: linear-gradient(180deg, rgba(6,182,212,.35), rgba(6,182,212,.12)); border-color: rgba(6,182,212,.3); box-shadow: 0 0 10px rgba(6,182,212,.2); }
-    .car-dot:nth-child(15) { top: 52%; animation-delay: -18s; animation-duration: 24s; width: 8px; height: 13px; opacity: .85; }
-    .car-dot:nth-child(16) { top: 65%; animation-delay: -7s;  animation-duration: 21s; animation-name: carDriftL; width: 9px; height: 15px; opacity: .8; background: linear-gradient(180deg, rgba(34,197,94,.45), rgba(34,197,94,.2)); }
-    .car-dot:nth-child(17) { top: 75%; animation-delay: -12s; animation-duration: 26s; width: 7px; height: 12px; opacity: .72; background: linear-gradient(180deg, rgba(6,182,212,.38), rgba(6,182,212,.14)); border-color: rgba(6,182,212,.32); }
-    .car-dot:nth-child(18) { top: 92%; animation-delay: -3s;  animation-duration: 22s; animation-name: carDriftL; width: 8px; height: 13px; opacity: .78; }
+    .car-dot:nth-child(10) { top: 70%; animation-delay: -6s;  animation-duration: 21s; background: linear-gradient(90deg, rgba(6,182,212,.4), rgba(6,182,212,.15), rgba(6,182,212,.06)); border-color: rgba(6,182,212,.35); box-shadow: 0 0 12px rgba(6,182,212,.22), inset 1px 0 0 rgba(255,255,255,.08); }
+    .car-dot:nth-child(11) { top: 82%; animation-delay: -15s; animation-duration: 25s; animation-name: carDriftL; width: 16px; height: 9px; opacity: .85; }
+    .car-dot:nth-child(12) { top: 12%; animation-delay: -9s;  animation-duration: 23s; animation-name: carDriftL; width: 18px; height: 9px; opacity: .75; background: linear-gradient(90deg, rgba(34,197,94,.15), rgba(34,197,94,.4)); border-color: rgba(34,197,94,.3); }
+    .car-dot:nth-child(13) { top: 25%; animation-delay: -13s; animation-duration: 20s; width: 14px; height: 7px; opacity: .7; }
+    .car-dot:nth-child(14) { top: 38%; animation-delay: -5s;  animation-duration: 27s; animation-name: carDriftL; background: linear-gradient(90deg, rgba(6,182,212,.12), rgba(6,182,212,.35)); border-color: rgba(6,182,212,.3); box-shadow: 0 0 10px rgba(6,182,212,.2); }
+    .car-dot:nth-child(15) { top: 52%; animation-delay: -18s; animation-duration: 24s; width: 16px; height: 8px; opacity: .85; }
+    .car-dot:nth-child(16) { top: 65%; animation-delay: -7s;  animation-duration: 21s; animation-name: carDriftL; width: 18px; height: 9px; opacity: .8; background: linear-gradient(90deg, rgba(34,197,94,.2), rgba(34,197,94,.45)); }
+    .car-dot:nth-child(17) { top: 75%; animation-delay: -12s; animation-duration: 26s; width: 14px; height: 7px; opacity: .72; background: linear-gradient(90deg, rgba(6,182,212,.38), rgba(6,182,212,.14)); border-color: rgba(6,182,212,.32); }
+    .car-dot:nth-child(18) { top: 92%; animation-delay: -3s;  animation-duration: 22s; animation-name: carDriftL; width: 16px; height: 8px; opacity: .78; }
     @keyframes carDriftR {
       0% { left: -5%; transform: translateX(0) scale(1); opacity: 0; }
       6% { opacity: .75; }
