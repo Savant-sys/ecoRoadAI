@@ -1,10 +1,9 @@
 # EcoRoad AI — SF Hacks 2026
 
-Flask app + YOLO perception + eco scoring + ExecuTorch export in one folder.
+Flask app + YOLO perception + eco scoring.
 
-- **`app.py`** — Dashboard (image + video upload, pipeline UI)
+- **`app.py`** — Dashboard (video upload, pipeline UI)
 - **`ecoroad.py`** — PyTorch (Ultralytics YOLO) perception + eco scoring
-- **`executorch/`** — ExecuTorch export (`.pte` + metadata) for on-device inference
 - **`yolov8n.pt`** — PyTorch weights (replace with BDD100K fine-tuned `best.pt` if you train)
 - **`train_bdd100k.py`** — Fine-tune on BDD100K (use **pre-trained**, not from scratch)
 
@@ -59,4 +58,4 @@ You can keep the folder; the app does not use it until you train on BDD100K.
 - **Transfer learning:** We load those weights and train further on BDD100K. The model **adapts** to driving scenes (cars, pedestrians, traffic lights, signs) instead of learning from scratch. Fewer epochs and less data are needed.
 - **Modifying the model:** You can later try freezing the backbone and only training the head (faster, less VRAM), or changing the number of classes in the head to match your research dataset. Ultralytics supports this via the model YAML and `freeze` in the trainer.
 
-Built on **PyTorch**. ExecuTorch export in `executorch/` for edge deployment.
+Built on **PyTorch** and Ultralytics YOLO.

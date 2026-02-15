@@ -208,6 +208,10 @@
       .road-lines, .road-glow { animation: none; }
       .car-dot { animation: none; opacity: 0; }
     }
+    /* Pause background animation when results are shown to keep scrolling smooth */
+    body.has-results .road-lines,
+    body.has-results .road-glow { animation: none; }
+    body.has-results .car-dot { animation: none; opacity: 0.5; }
     body > * { position: relative; z-index: 1; }
     body { max-width: 1000px; margin: 0 auto; padding: 0 24px 56px; }
     .grid-bg { display: none; }
@@ -229,7 +233,8 @@
       position: sticky;
       top: 14px;
     }
-    .nav-left { display: flex; align-items: center; gap: 14px; }
+    .nav-left { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; transition: opacity 0.2s var(--ease); }
+    a.nav-left:hover { opacity: 0.9; }
     .logo-mark {
       width: 44px; height: 44px; border-radius: 12px;
       background: linear-gradient(135deg, rgba(34,197,94,.96), rgba(6,182,212,.75));
@@ -419,7 +424,7 @@
     }
     .load-time { margin-top: 10px; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; font-weight: 600; }
 
-    .results { animation: revealUp 0.4s var(--ease) both; }
+    .results { animation: revealUp 0.4s var(--ease) both; contain: layout style; }
     @keyframes revealUp { from { opacity: 0; transform: translateY(16px); } }
     .grid-main { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
     @media (max-width: 920px) { .grid-main { grid-template-columns: 1fr; } }
@@ -450,7 +455,7 @@
     }
     video:focus, .out-img:focus { outline: none; box-shadow: 0 0 0 2px var(--accent); }
     .media-wrap:hover video, .media-wrap:hover .out-img { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .media-wrap { position: relative; border-radius: var(--radius); overflow: hidden; }
+    .media-wrap { position: relative; border-radius: var(--radius); overflow: hidden; contain: layout paint; }
     .media-badge {
       position: absolute; top: 10px; left: 10px; z-index: 2;
       font-size: 10px; font-weight: 600;
@@ -740,6 +745,34 @@
       font-family: ui-monospace, 'Cascadia Code', 'SF Mono', monospace;
     }
 
+    /* History */
+    .history-section { margin-bottom: 28px; }
+    .history-title {
+      font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--text-2);
+      margin-bottom: 12px; letter-spacing: -0.02em;
+    }
+    .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+    .history-item { margin: 0; }
+    .history-link {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 16px; border-radius: var(--radius);
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .history-link:hover { border-color: var(--border2); background: var(--bg-float); }
+    .history-filename { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; font-size: 12px; color: var(--text-3); }
+    .history-risk { font-weight: 700; text-transform: uppercase; font-size: 10px; }
+    .history-risk.risk-low { color: var(--green-bright); }
+    .history-risk.risk-medium { color: var(--amber); }
+    .history-risk.risk-high { color: var(--red); }
+    .history-time { font-variant-numeric: tabular-nums; color: var(--text-4); }
+    .video-unavailable {
+      padding: 32px 24px; text-align: center; font-size: 14px; color: var(--text-3);
+      background: var(--bg-raised); border: 1px dashed var(--border); border-radius: var(--radius);
+    }
+
     /* Footer */
     .foot {
       display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
@@ -808,7 +841,7 @@
     }
   </style>
 </head>
-<body>
+<body class="{% if summary %}has-results{% endif %}">
   <div class="bg-animation" aria-hidden="true">
     <div class="road-glow"></div>
     <div class="road-lines"></div>
@@ -833,13 +866,13 @@
 
   <!-- NAV -->
   <nav class="nav">
-    <div class="nav-left">
+    <a href="/" class="nav-left" aria-label="Back to home">
       <div class="logo-mark">E</div>
       <div class="brand">
         <h1>Eco<b>Road</b> AI</h1>
         <p>Sustainable driving intelligence &middot; SF Hacks 2026</p>
       </div>
-    </div>
+    </a>
     <div class="nav-pills">
       <span class="pill pill-torch">PyTorch</span>
       <span class="pill pill-yolo">YOLOv8</span>
@@ -940,6 +973,27 @@
   })();
   </script>
 
+  <!-- HISTORY -->
+  {% if history and history|length > 0 %}
+  <section class="history-section" aria-label="Past analyses">
+    <h3 class="history-title">Recent analyses</h3>
+    <ul class="history-list">
+      {% for entry in history %}
+      <li class="history-item">
+        <a href="/?output_id={{ entry.output_id }}" class="history-link">
+          <span class="history-filename">{{ entry.filename }}</span>
+          <span class="history-meta">
+            {% if entry.eco_score is not none %}Eco {{ entry.eco_score }}{% endif %}
+            {% if entry.risk_level %}<span class="history-risk risk-{{ entry.risk_level }}">{{ entry.risk_level }}</span>{% endif %}
+            <span class="history-time">{{ entry.timestamp[:10] }}{% if entry.timestamp|length > 10 %} {{ entry.timestamp[11:19] }}{% endif %}</span>
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
   {% if summary %}
   <script>
   (function(){
@@ -976,6 +1030,7 @@
         <div class="section-label"><span class="dot"></span> Perception Output<span class="badge">{{ summary.frames_processed }} frames</span></div>
         <div class="media-wrap">
           <span class="media-badge">Annotated video</span>
+          {% if video_available %}
           <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
           <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
@@ -987,10 +1042,13 @@
             </div>
           </div>
           {% endif %}
+          {% else %}
+          <div class="video-unavailable">Video no longer available (session ended). Summary and metrics below.</div>
+          {% endif %}
         </div>
         <div class="media-info">
           <span>{{ summary.frames_processed }} frames</span>
-          <a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.mp4' }}">Download video</a>
+          {% if video_available %}<a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.mp4' }}">Download video</a>{% endif %}
         </div>
       </div>
 
@@ -1326,8 +1384,9 @@
   <!-- Footer -->
   <div class="foot">
     <span class="pill pill-torch">PyTorch</span>
-    <span class="pill pill-yolo">ExecuTorch</span>
-    <p>Ultralytics YOLO + PyTorch. ExecuTorch export in <code>executorch/</code> for on-device inference. <a href="https://pytorch.org/executorch/" target="_blank" rel="noopener">Learn more</a> &middot; SF Hacks 2026</p>
+    <span class="pill pill-yolo">YOLOv8</span>
+    <span class="pill pill-gpu">CUDA</span>
+    <p>Ultralytics YOLO + PyTorch &middot; SF Hacks 2026</p>
   </div>
 
   <!-- Scripts -->

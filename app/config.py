@@ -13,6 +13,8 @@ DETECT_DIR = VIDEOS_DIR / "detect"        # YOLO predict output (predict_batch, 
 OUTPUT_PARALLEL_DIR = VIDEOS_DIR / "output_parallel"  # segment outputs when using ECOROAD_PARALLEL_VIDEO
 ANALYTICS_DIR = VIDEOS_DIR / "analytics"  # persistent cross-trip analytics (not cleared on startup)
 TRIP_HISTORY_PATH = ANALYTICS_DIR / "trip_history.json"
+RUN_HISTORY_PATH = ANALYTICS_DIR / "run_history.json"  # list of past analyzed videos
+SUMMARIES_DIR = ANALYTICS_DIR / "summaries"  # persisted summary per output_id for history view
 
 # Directories cleared on app startup (clean slate when you rerun app.py)
 VIDEO_CLEANUP_DIRS = (UPLOADS_DIR, OUTPUT_DIR, DETECT_DIR, OUTPUT_PARALLEL_DIR)

@@ -3,11 +3,43 @@ import json
 import subprocess
 import sys
 import time
+from datetime import datetime
 
 from flask import request, render_template, make_response
 
-from app.config import ROOT, UPLOADS_DIR, OUTPUT_DIR
+from app.config import ROOT, UPLOADS_DIR, OUTPUT_DIR, RUN_HISTORY_PATH, SUMMARIES_DIR
 from app.utils import get_annotated_path, send_annotated_response
+
+MAX_HISTORY = 30
+
+
+def _load_history():
+    """Return list of run history entries (newest first)."""
+    if not RUN_HISTORY_PATH.exists():
+        return []
+    try:
+        data = json.loads(RUN_HISTORY_PATH.read_text())
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _save_history_entry(output_id, filename, summary):
+    """Append one entry to run history and persist summary for later view."""
+    SUMMARIES_DIR.mkdir(parents=True, exist_ok=True)
+    summary_path = SUMMARIES_DIR / f"{output_id}.json"
+    summary_path.write_text(json.dumps(summary, indent=2))
+    entry = {
+        "output_id": output_id,
+        "filename": filename or "video",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "eco_score": summary.get("eco_score"),
+        "risk_level": summary.get("risk_level"),
+    }
+    history = _load_history()
+    history.insert(0, entry)
+    RUN_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RUN_HISTORY_PATH.write_text(json.dumps(history[:MAX_HISTORY], indent=2))
 
 
 def register_routes(app):
@@ -18,7 +50,21 @@ def register_routes(app):
         summary = None
         output_id = None
         annotated_filename = None
-        if request.method == "POST":
+        video_available = True
+        history = _load_history()
+
+        if request.method == "GET" and request.args.get("output_id"):
+            oid = request.args.get("output_id", "").strip()
+            if oid.isdigit():
+                summary_path = SUMMARIES_DIR / f"{oid}.json"
+                if summary_path.exists():
+                    summary = json.loads(summary_path.read_text())
+                    output_id = int(oid)
+                    annotated_filename = summary.get("annotated_media")
+                    path, _ = get_annotated_path(output_id)
+                    video_available = path is not None and path.exists()
+
+        elif request.method == "POST":
             f = request.files.get("video") or request.files.get("image") or request.files.get("media")
             if not f or f.filename == "":
                 return render_template(
@@ -26,6 +72,8 @@ def register_routes(app):
                     summary=None,
                     output_id=None,
                     annotated_filename=None,
+                    video_available=True,
+                    history=history,
                 )
             fn = (f.filename or "").lower()
             if not any(fn.endswith(ext) for ext in (".mp4", ".mov", ".webm", ".avi", ".mkv")):
@@ -34,6 +82,8 @@ def register_routes(app):
                     summary=None,
                     output_id=None,
                     annotated_filename=None,
+                    video_available=True,
+                    history=history,
                 )
             UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
             output_id = int(time.time() * 1000)
@@ -54,13 +104,17 @@ def register_routes(app):
             )
             summary = json.loads((OUTPUT_DIR / "summary.json").read_text())
             annotated_filename = summary.get("annotated_media")
+            _save_history_entry(output_id, f.filename, summary)
+            history = _load_history()
+
         resp = make_response(render_template(
             "index.html",
             summary=summary,
             output_id=output_id,
             annotated_filename=annotated_filename,
+            video_available=video_available,
+            history=history,
         ))
-        # Prevent caching so second upload always shows the new result
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
         return resp
