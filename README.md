@@ -96,4 +96,4 @@ The app uses a **pre-trained** YOLO model (`yolov8n.pt`). Optional fine-tuning o
 
 ## License
 
-See repository for license details.
+MIT License — see [LICENSE](LICENSE).
