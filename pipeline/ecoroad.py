@@ -1331,7 +1331,8 @@ def main():
             _run_parallel_video(source, n)
             return
 
-    model_path = ROOT / "yolov8n.pt"
+    model_path = os.environ.get("ECOROAD_MODEL_PATH", str(ROOT / "yolov8n.pt"))
+    model_path = Path(model_path).resolve() if model_path else (ROOT / "yolov8n.pt")
     model = YOLO(str(model_path))
     is_video = str(source).lower().endswith(VIDEO_EXTENSIONS)
 
@@ -1340,7 +1341,11 @@ def main():
     print("Using device:", device, "(FP16)" if use_half else "")
 
     run_name = ("segment_" + segment_out.name) if segment_out else None
-    predict_kw = dict(save=True, imgsz=640, conf=0.25, device=device, half=use_half)  # 0.15 so more detections show in image output
+    try:
+        conf = float(os.environ.get("ECOROAD_CONF", "0.25"))
+    except (TypeError, ValueError):
+        conf = 0.25
+    predict_kw = dict(save=True, imgsz=640, conf=conf, device=device, half=use_half)
     # Always save under DETECT_DIR so we find the output (otherwise Ultralytics uses runs/detect/predict)
     predict_kw["project"] = str(DETECT_DIR)
     predict_kw["name"] = run_name if run_name else "predict"

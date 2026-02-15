@@ -31,7 +31,9 @@ python3 -m venv .venv
 Then open **http://localhost:5050** (default port 5050 to avoid macOS AirPlay on 5000).  
 To use another port: `PORT=8080 ./run.sh`
 
-Upload a video, wait for analysis (~30–60 s depending on length and device), then explore the results. Click the **ⓘ** icons next to each result for short explanations.
+Upload a video, wait for analysis (~30–60 s depending on length and device), then explore the results. Click the **ⓘ** icons for explanations. Use **km / mi** in the nav to switch metric/imperial; **Download results (JSON)** to export the run.
+
+**Try with sample:** If you add a short video as `samples/sample.mp4` (or have clips in `bdd100k/`), a **Try with sample video** button appears so you can run the pipeline without uploading.
 
 ---
 
@@ -41,7 +43,9 @@ Upload a video, wait for analysis (~30–60 s depending on length and device), t
 - **Vision:** PyTorch + Ultralytics YOLO (object detection)
 - **Pipeline:** `pipeline/ecoroad.py` — detection, scene classification, eco/risk rules, CO₂ and fuel estimates, trip summary
 
-The app uses a **pre-trained** YOLO model (`yolov8n.pt`). You can optionally fine-tune on BDD100K for better driving-scene accuracy (see `scripts/train_bdd100k.py` and `docs/`).
+The app uses a **pre-trained** YOLO model (`yolov8n.pt`). You can optionally fine-tune on BDD100K (see `scripts/train_bdd100k.py` and `docs/`).
+
+**Optional env:** `ECOROAD_MODEL_PATH` — path to weights (default: `yolov8n.pt`). `ECOROAD_CONF` — detection confidence 0–1 (default: `0.25`). `ECOROAD_DEVICE` — `cuda` or `cpu`.
 
 ---
 
@@ -57,6 +61,7 @@ The app uses a **pre-trained** YOLO model (`yolov8n.pt`). You can optionally fin
 | `scripts/` | `clean.sh` (cache/video cleanup), `train_bdd100k.py` (optional training) |
 | `tests/` | Unit and integration tests |
 | `docs/` | Result explanations, testing summary |
+| `samples/` | Put `sample.mp4` here for **Try with sample** (or use `bdd100k/*.mov`) |
 
 ---
 
