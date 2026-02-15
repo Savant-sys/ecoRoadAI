@@ -376,6 +376,10 @@
     .run-btn svg { vertical-align: -2px; margin-right: 8px; }
     .sample-btn { background: none; border: none; padding: 0; font-size: 13px; color: var(--accent); cursor: pointer; text-decoration: underline; font-family: inherit; }
     .sample-btn:hover { color: var(--text); }
+    .unit-toggle { background: var(--bg-float); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--text-2); cursor: pointer; font-family: inherit; }
+    .unit-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    body.unit-imperial .unit-metric { display: none !important; }
+    body.unit-metric .unit-imperial { display: none !important; }
 
     .load-overlay {
       display: none; position: fixed; inset: 0;
@@ -507,11 +511,12 @@
     .media-wrap:hover video, .media-wrap:hover .out-img { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .media-wrap { position: relative; border-radius: var(--radius); overflow: hidden; contain: layout paint; }
     .media-badge {
-      position: absolute; top: 10px; left: 10px; z-index: 2;
+      display: inline-block;
       font-size: 10px; font-weight: 600;
       padding: 6px 11px; border-radius: 8px;
       background: var(--card); border: 1px solid var(--border);
       color: var(--text-2);
+      margin-bottom: 8px;
     }
     .media-info {
       margin-top: 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
@@ -932,6 +937,7 @@
       </div>
     </a>
     <div class="nav-pills">
+      <button type="button" class="unit-toggle" id="unit-toggle" title="Switch metric / imperial" aria-pressed="false"><span class="unit-m">km</span> / <span class="unit-i">mi</span></button>
       <span class="pill pill-torch">PyTorch</span>
       <span class="pill pill-yolo">YOLOv8</span>
       <span class="pill pill-gpu">CUDA</span>
@@ -1007,6 +1013,24 @@
           zone.classList.remove('has-file');
           icon.textContent='📹';
         }
+      });
+    }
+  })();
+  </script>
+  <script>
+  (function(){
+    var u=document.getElementById('unit-toggle'), key='ecoroad_units';
+    if(u){
+      document.body.classList.remove('unit-metric','unit-imperial');
+      if(localStorage.getItem(key)==='imperial'){ document.body.classList.add('unit-imperial'); u.setAttribute('aria-pressed','true'); }
+      else{ document.body.classList.add('unit-metric'); u.setAttribute('aria-pressed','false'); }
+      u.addEventListener('click',function(){
+        var wasImperial=document.body.classList.contains('unit-imperial');
+        document.body.classList.remove('unit-metric','unit-imperial');
+        var isImperial=!wasImperial;
+        document.body.classList.add(isImperial?'unit-imperial':'unit-metric');
+        localStorage.setItem(key,isImperial?'imperial':'metric');
+        u.setAttribute('aria-pressed',isImperial);
       });
     }
   })();
@@ -1157,8 +1181,8 @@
       <!-- Left: media -->
       <div class="panel panel-media">
         <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Your clip with AI bounding boxes on detected objects. &quot;fr&quot; = frames we analyzed (e.g. 30 fr/sec at 30 fps).</span></span></div>
+        <span class="media-badge">Annotated</span>
         <div class="media-wrap">
-          <span class="media-badge">Annotated</span>
           {% if video_available %}
           <video id="annotated-{{ output_id }}" data-output-id="{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
@@ -1294,18 +1318,18 @@
             <div class="fuel-metric">
               <div class="fuel-icon">⛽</div>
               <div class="fuel-data">
-                <div class="fuel-value">{{ fuel.liters_used }}L</div>
+                <div class="fuel-value"><span class="unit-metric">{{ fuel.liters_used }}L</span><span class="unit-imperial">{{ "%.2f"|format(fuel.liters_used / 3.785) }} gal</span></div>
                 <div class="fuel-label">Used</div>
               </div>
             </div>
             <div class="fuel-metric">
               <div class="fuel-icon">📊</div>
               <div class="fuel-data">
-                <div class="fuel-value">{{ fuel.liters_per_100km }}L</div>
-                <div class="fuel-label">per 100km</div>
+                <div class="fuel-value"><span class="unit-metric">{{ fuel.liters_per_100km }}L</span><span class="unit-imperial">{{ fuel.mpg_us }}</span></div>
+                <div class="fuel-label"><span class="unit-metric">per 100km</span><span class="unit-imperial">MPG</span></div>
               </div>
             </div>
-            <div class="fuel-metric">
+            <div class="fuel-metric unit-metric">
               <div class="fuel-icon">🇺🇸</div>
               <div class="fuel-data">
                 <div class="fuel-value">{{ fuel.mpg_us }} MPG</div>
@@ -1483,7 +1507,7 @@
           <div class="trip-chips">
             <span class="chip chip-co2">{{ ts.total_co2_g }}g CO2</span>
             <span class="chip">{{ ts.avg_co2_gkm }} g/km avg</span>
-            <span class="chip">{{ ts.distance_est_km }} km</span>
+            <span class="chip"><span class="unit-metric">{{ ts.distance_est_km }} km</span><span class="unit-imperial">{{ "%.2f"|format(ts.distance_est_km * 0.621371) }} mi</span></span>
             {% if ts.efficiency_loss_pct > 0 %}<span class="chip chip-fuel">-{{ ts.efficiency_loss_pct }}% eff</span>{% endif %}
           </div>
           <div class="risk-bar">
