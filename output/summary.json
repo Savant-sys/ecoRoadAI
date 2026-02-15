@@ -1,0 +1,16 @@
+{
+  "source": "uploads/3.jpg",
+  "detections": {
+    "car": 8,
+    "truck": 1,
+    "traffic light": 1
+  },
+  "risk_level": "high",
+  "eco_score": 50,
+  "co2_impact": "Medium",
+  "tips": [
+    "Heavy traffic: smooth acceleration and longer following distance reduces braking and energy waste.",
+    "Traffic control ahead: anticipate stops, coast early, and avoid rapid acceleration."
+  ],
+  "annotated_image": "output/annotated.jpg"
+}
