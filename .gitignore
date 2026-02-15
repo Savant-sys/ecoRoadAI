@@ -21,4 +21,5 @@ datasets/bdd100k_resolved.yaml
 venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 .DS_Store
