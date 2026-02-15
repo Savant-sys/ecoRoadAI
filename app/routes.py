@@ -69,6 +69,42 @@ def _save_history_entry(output_id, filename, summary):
 def register_routes(app):
     """Register all routes on the Flask app."""
 
+    @app.route("/gallery")
+    def gallery():
+        """Detection gallery: all runs with annotated video."""
+        history = _load_history()
+        gallery_entries = []
+        for entry in history:
+            path, _ = get_annotated_path(entry["output_id"])
+            gallery_entries.append({
+                **entry,
+                "video_available": path is not None and path.exists(),
+            })
+        return render_template(
+            "gallery.html",
+            history=history,
+            gallery_entries=gallery_entries,
+            sample_available=bool(_get_sample_video_path()),
+        )
+
+    @app.route("/timelapse")
+    def timelapse():
+        """Timelapse: runs over time, same data as gallery."""
+        history = _load_history()
+        timelapse_entries = []
+        for entry in history:
+            path, _ = get_annotated_path(entry["output_id"])
+            timelapse_entries.append({
+                **entry,
+                "video_available": path is not None and path.exists(),
+            })
+        return render_template(
+            "timelapse.html",
+            history=history,
+            timelapse_entries=timelapse_entries,
+            sample_available=bool(_get_sample_video_path()),
+        )
+
     @app.route("/", methods=["GET", "POST"])
     def index():
         summary = None
@@ -78,21 +114,6 @@ def register_routes(app):
         history = _load_history()
 
         sample_available = bool(_get_sample_video_path())
-        if request.method == "GET" and request.args.get("view") == "gallery":
-            # Show all annotated videos at once (detection gallery)
-            gallery_entries = []
-            for entry in history:
-                path, _ = get_annotated_path(entry["output_id"])
-                gallery_entries.append({
-                    **entry,
-                    "video_available": path is not None and path.exists(),
-                })
-            return render_template(
-                "gallery.html",
-                history=history,
-                gallery_entries=gallery_entries,
-                sample_available=sample_available,
-            )
         if request.method == "GET" and request.args.get("output_id"):
             oid = request.args.get("output_id", "").strip()
             if oid.isdigit():

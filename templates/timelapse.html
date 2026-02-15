@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Detection gallery — EcoRoad AI</title>
+  <title>Timelapse — EcoRoad AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,38 +30,40 @@
     .brand h1 { font-family: var(--font-head); font-size: 20px; font-weight: 700; }
     .brand p { font-size: 12px; color: var(--text-3); margin-top: 2px; }
     .nav-pills { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .pill { font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-float); color: var(--text-3); }
+    .pill { font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-float); color: var(--text-3); text-decoration: none; color: inherit; }
+    .pill-link { cursor: pointer; }
+    .pill-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(34,197,94,.1); }
     .pill-active { color: var(--accent); border-color: var(--accent); background: rgba(34,197,94,.12); }
     .clear-btn { font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-float); color: var(--text-3); cursor: pointer; }
     .clear-btn:hover { color: var(--red); }
-    .gallery-head { font-family: var(--font-head); font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-    .gallery-p { font-size: 14px; color: var(--text-2); margin-bottom: 24px; }
-    .gallery-grid {
+    .timelapse-head { font-family: var(--font-head); font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .timelapse-p { font-size: 14px; color: var(--text-2); margin-bottom: 24px; }
+    .timelapse-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
     }
-    .gallery-card {
+    .timelapse-card {
       background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
       overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,.3);
     }
-    .gallery-card .thumb-wrap {
+    .timelapse-card .thumb-wrap {
       position: relative; background: #000; aspect-ratio: 16/9; overflow: hidden;
     }
-    .gallery-card video { width: 100%; height: 100%; object-fit: contain; display: block; }
-    .gallery-card .no-video { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-4); font-size: 13px; }
-    .gallery-card .caption {
+    .timelapse-card video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .timelapse-card .no-video { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-4); font-size: 13px; }
+    .timelapse-card .caption {
       padding: 12px 14px; font-size: 13px;
     }
-    .gallery-card .caption .name { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .gallery-card .caption .meta { margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--text-3); }
-    .gallery-card .caption .risk { padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }
-    .gallery-card .caption .risk.risk-low { background: rgba(34,197,94,.2); color: var(--risk-low); }
-    .gallery-card .caption .risk.risk-medium { background: rgba(234,179,8,.2); color: var(--risk-medium); }
-    .gallery-card .caption .risk.risk-high { background: rgba(239,68,68,.2); color: var(--risk-high); }
-    .gallery-card .caption a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .gallery-card .caption a:hover { text-decoration: underline; }
-    .gallery-empty { text-align: center; padding: 48px 24px; color: var(--text-3); font-size: 15px; }
-    .gallery-empty a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .gallery-empty a:hover { text-decoration: underline; }
+    .timelapse-card .caption .name { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .timelapse-card .caption .meta { margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--text-3); }
+    .timelapse-card .caption .risk { padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }
+    .timelapse-card .caption .risk.risk-low { background: rgba(34,197,94,.2); color: var(--risk-low); }
+    .timelapse-card .caption .risk.risk-medium { background: rgba(234,179,8,.2); color: var(--risk-medium); }
+    .timelapse-card .caption .risk.risk-high { background: rgba(239,68,68,.2); color: var(--risk-high); }
+    .timelapse-card .caption a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .timelapse-card .caption a:hover { text-decoration: underline; }
+    .timelapse-empty { text-align: center; padding: 48px 24px; color: var(--text-3); font-size: 15px; }
+    .timelapse-empty a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .timelapse-empty a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -75,23 +77,21 @@
         </div>
       </a>
       <div class="nav-pills">
-        <a href="/gallery" class="pill pill-active" style="text-decoration:none;color:inherit;">Gallery</a>
-        <a href="/timelapse" class="pill" style="text-decoration:none;color:inherit;">Timelapse</a>
-        <span class="pill">PyTorch</span>
-        <span class="pill">YOLOv8</span>
+        <a href="/gallery" class="pill pill-link">Gallery</a>
+        <a href="/timelapse" class="pill pill-link pill-active">Timelapse</a>
         <form method="post" action="/clear" style="display:inline;" onsubmit="return confirm('Delete all uploads and annotated results?');">
           <button type="submit" class="clear-btn">Clear all</button>
         </form>
       </div>
     </nav>
 
-    <h2 class="gallery-head">Detection gallery</h2>
-    <p class="gallery-p">All runs with annotated video at once — see how object detection works on each clip.</p>
+    <h2 class="timelapse-head">Timelapse</h2>
+    <p class="timelapse-p">Your detection runs over time — click any run to view full results.</p>
 
-    {% if gallery_entries %}
-    <div class="gallery-grid">
-      {% for entry in gallery_entries %}
-      <div class="gallery-card">
+    {% if timelapse_entries %}
+    <div class="timelapse-grid">
+      {% for entry in timelapse_entries %}
+      <div class="timelapse-card">
         <div class="thumb-wrap">
           {% if entry.video_available %}
           <video src="/annotated/{{ entry.output_id }}" controls playsinline preload="metadata" muted loop></video>
@@ -112,8 +112,8 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="gallery-empty">
-      <p>No analyses yet. <a href="/">Upload a video</a> to run detection, then come back to see all clips here.</p>
+    <div class="timelapse-empty">
+      <p>No analyses yet. <a href="/">Upload a video</a> to run detection, then come back to see runs here.</p>
     </div>
     {% endif %}
   </div>

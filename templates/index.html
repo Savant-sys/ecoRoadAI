@@ -248,6 +248,8 @@
       transition: color 0.2s, border-color 0.2s, background 0.2s;
     }
     .pill:hover { color: var(--text); border-color: var(--border2); background: var(--card); }
+    .pill-link { cursor: pointer; }
+    .pill-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(34,197,94,.1); }
     .pill-torch {
       border-color: rgba(251,191,36,.45);
       background: rgba(251,191,36,.08);
@@ -946,6 +948,8 @@
       </div>
     </a>
     <div class="nav-pills">
+      <a href="/gallery" class="pill pill-link" style="text-decoration:none;color:inherit;">Gallery</a>
+      <a href="/timelapse" class="pill pill-link" style="text-decoration:none;color:inherit;">Timelapse</a>
       <button type="button" class="unit-toggle" id="unit-toggle" title="Switch metric / imperial" aria-pressed="false"><span class="unit-m">km</span> / <span class="unit-i">mi</span></button>
       <span class="pill pill-torch">PyTorch</span>
       <span class="pill pill-yolo">YOLOv8</span>
@@ -1115,7 +1119,7 @@
   {% if history and history|length > 0 %}
   <section class="history-section" aria-label="Past analyses">
     <h3 class="history-title">Recent analyses</h3>
-    <p class="history-actions"><a href="/?view=gallery">View all detection videos at once</a></p>
+    <p class="history-actions"><a href="/gallery">View all detection videos at once</a></p>
     <ul class="history-list">
       {% for entry in history %}
       <li class="history-item">
@@ -1728,20 +1732,39 @@
     vid.addEventListener('pause',function(){if(pid){clearInterval(pid);pid=null;}});
     vid.addEventListener('ended',function(){if(pid){clearInterval(pid);pid=null;}});
     vid.addEventListener('seeked',function(){var t=vid.currentTime;for(var i=0;i<pa.length;i++)if(pa[i].time>t+0.5)delete fired[i];});
-    // Click timeline marker -> seek all synced videos to time, play all together, show alert
+    // Click timeline marker -> seek video to time, play, show alert
     document.querySelectorAll('.alert-marker').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        var idx=parseInt(btn.getAttribute('data-index'));
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var idx=parseInt(btn.getAttribute('data-index'),10);
         var t=parseFloat(btn.getAttribute('data-time'));
-        if(!isNaN(t)&&!isNaN(idx)&&vid&&pa[idx]){
-          var toSync = vid.getAttribute('data-sync-group')
-            ? document.querySelectorAll('video[data-sync-group="'+vid.getAttribute('data-sync-group')+'"]')
-            : [vid];
-          toSync.forEach(function(v){ v.currentTime=t; });
+        if(isNaN(t))return;
+        var panel=btn.closest('.panel-media');
+        var targetVid=panel?panel.querySelector('video'):(document.querySelector('video[data-output-id]')||document.querySelector('video'));
+        if(!targetVid)return;
+        targetVid.currentTime=t;
+        targetVid.play().catch(function(){});
+        if(!isNaN(idx)&&pa[idx]){
           fired[idx]=1;
           show(pa[idx]);
-          toSync.forEach(function(v){ v.play().catch(function(){}); });
         }
+      });
+    });
+    // Click anywhere on timeline bar -> seek to that time
+    document.querySelectorAll('.alert-timeline-bar').forEach(function(bar){
+      bar.addEventListener('click',function(e){
+        if(e.target.classList.contains('alert-marker'))return;
+        var tl=bar.closest('.alert-timeline');
+        var dur=parseFloat(tl&&tl.getAttribute('data-duration'));
+        if(!dur||isNaN(dur))return;
+        var rect=bar.getBoundingClientRect();
+        var frac=(e.clientX-rect.left)/rect.width;
+        frac=Math.max(0,Math.min(1,frac));
+        var t=frac*dur;
+        var panel=bar.closest('.panel-media');
+        var v=panel?panel.querySelector('video'):document.querySelector('video');
+        if(v){ v.currentTime=t; v.play().catch(function(){}); }
       });
     });
   })();
