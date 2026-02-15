@@ -55,10 +55,10 @@
     body {
       font-family: var(--font-body);
       background:
-  radial-gradient(1400px 800px at 10% 0%, rgba(34,197,94,0.14) 0%, transparent 65%),
-  radial-gradient(1000px 600px at 90% 10%, rgba(6,182,212,0.12) 0%, transparent 60%),
-  radial-gradient(900px 700px at 75% 100%, rgba(34,197,94,0.10) 0%, transparent 65%),
-  linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
+  radial-gradient(1400px 900px at 15% -10%, rgba(34,197,94,0.06), transparent 75%),
+  radial-gradient(1000px 700px at 95% 0%, rgba(6,182,212,0.05), transparent 75%),
+  linear-gradient(180deg, #020304 0%, #070a0f 50%, #020304 100%);
+
 
       color: var(--text);
       min-height: 100vh;
@@ -850,16 +850,16 @@
   <!-- HERO UPLOAD -->
   <div class="hero">
     <h2 class="hero-head">Drive smarter. <span class="g">Drive greener.</span></h2>
-    <p class="hero-tagline">Drop a dashcam image or video — we’ll analyze risk, CO₂ impact, and surface time-synced coaching alerts so you can improve every trip.</p>
+    <p class="hero-tagline">Drop a dashcam video — we’ll analyze risk, CO₂ impact, and surface time-synced coaching alerts so you can improve every trip.</p>
     <form id="upload-form" method="POST" enctype="multipart/form-data">
-      <div class="hero-label">Upload media</div>
+      <div class="hero-label">Upload video</div>
       <div class="hero-grid">
         <div>
           <div class="upload-zone">
-            <input id="file-input" type="file" name="image" accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" required>
+            <input id="file-input" type="file" name="video" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" required>
             <div class="upload-icon" id="upload-icon">📹</div>
           </div>
-          <p class="hero-hint">Image or short dashcam clip (MP4, MOV, WebM)</p>
+          <p class="hero-hint">Short dashcam clip (MP4, MOV, WebM)</p>
         </div>
         <button type="submit" class="run-btn" id="run-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -919,12 +919,11 @@
     }
     form.addEventListener('submit',function(){
       var f=fIn.files[0]; if(!f)return;
-      var isV=f.type.startsWith('video')||/\.(mp4|mov|avi|webm|mkv)$/i.test(f.name);
-      hEl.textContent=isV?'Analyzing video...':'Analyzing image...';
-      pEl.textContent=isV?'Processing frames through perception pipeline':'Running AI detection';
+      hEl.textContent='Analyzing video...';
+      pEl.textContent='Processing frames through perception pipeline';
       btn.disabled=true; btn.textContent='Processing...';
       ov.classList.add('on');
-      var t0=Date.now(), ts=isV?[1200,7000,13000,17000]:[600,2000,3500,5000], cur=0;
+      var t0=Date.now(), ts=[1200,7000,13000,17000], cur=0;
       setS(0); fill.style.width='4%';
       function adv(){
         if(cur>=ids.length)return;
@@ -952,7 +951,7 @@
 
   <!-- ALERT OVERLAY -->
   {% if summary.risk_level in ['high','medium'] or summary.get('playback_alerts') %}
-  <div id="alert-overlay" class="alert-overlay{% if summary.risk_level in ['high','medium'] and (summary.media_type != 'video' or not summary.get('playback_alerts')) %} visible{% endif %}" data-media-type="{{ summary.media_type }}">
+  <div id="alert-overlay" class="alert-overlay{% if summary.risk_level in ['high','medium'] and not summary.get('playback_alerts') %} visible{% endif %}" data-media-type="video">
     <div id="alert-box" class="alert-box risk-{{ summary.risk_level }}">
       <div id="a-time" class="a-time" style="display:none"></div>
       <h2 id="a-title">{% if summary.risk_level=='high' %}Heads up — higher risk{% else %}Worth a look{% endif %}</h2>
@@ -974,9 +973,8 @@
     <div class="grid-main">
       <!-- Left: media -->
       <div class="panel panel-media">
-        <div class="section-label"><span class="dot"></span> Perception Output{% if summary.media_type=='video' %}<span class="badge">{{ summary.frames_processed }} frames</span>{% endif %}</div>
+        <div class="section-label"><span class="dot"></span> Perception Output<span class="badge">{{ summary.frames_processed }} frames</span></div>
         <div class="media-wrap">
-          {% if summary.media_type=='video' %}
           <span class="media-badge">Annotated video</span>
           <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
@@ -989,19 +987,10 @@
             </div>
           </div>
           {% endif %}
-          {% else %}
-          <span class="media-badge">Annotated image</span>
-          <img class="out-img" src="/annotated/{{ output_id }}?t={{ output_id }}" alt="Annotated">
-          {% endif %}
         </div>
         <div class="media-info">
-          {% if summary.media_type=='video' %}
           <span>{{ summary.frames_processed }} frames</span>
           <a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.mp4' }}">Download video</a>
-          {% else %}
-          <span>Annotated detections</span>
-          <a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.jpg' }}">Download image</a>
-          {% endif %}
         </div>
       </div>
 
