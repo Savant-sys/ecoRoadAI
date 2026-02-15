@@ -10,12 +10,12 @@ def get_annotated_path(output_id):
     fall back to OUTPUT_DIR / annotated.<ext> so the latest result still loads."""
     if output_id is not None and str(output_id).isdigit():
         out = OUTPUT_DIR
-        for ext, mime in list(VIDEO_EXT_MIME.items()) + [(".jpg", "image/jpeg"), (".png", "image/png"), (".jpeg", "image/jpeg")]:
+        for ext, mime in VIDEO_EXT_MIME.items():
             p = out / ("annotated_" + str(output_id) + ext)
             if p.exists():
                 return p, mime
         # Fallback: parallel merge or cleared dir — try generic annotated.<ext>
-        for ext, mime in list(VIDEO_EXT_MIME.items()) + [(".jpg", "image/jpeg"), (".png", "image/png"), (".jpeg", "image/jpeg")]:
+        for ext, mime in VIDEO_EXT_MIME.items():
             p = out / ("annotated" + ext)
             if p.exists():
                 return p, mime

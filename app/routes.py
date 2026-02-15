@@ -19,8 +19,16 @@ def register_routes(app):
         output_id = None
         annotated_filename = None
         if request.method == "POST":
-            f = request.files.get("image") or request.files.get("media")
+            f = request.files.get("video") or request.files.get("image") or request.files.get("media")
             if not f or f.filename == "":
+                return render_template(
+                    "index.html",
+                    summary=None,
+                    output_id=None,
+                    annotated_filename=None,
+                )
+            fn = (f.filename or "").lower()
+            if not any(fn.endswith(ext) for ext in (".mp4", ".mov", ".webm", ".avi", ".mkv")):
                 return render_template(
                     "index.html",
                     summary=None,
@@ -52,7 +60,7 @@ def register_routes(app):
             output_id=output_id,
             annotated_filename=annotated_filename,
         ))
-        # Prevent caching so second upload always shows the new result, not the first image
+        # Prevent caching so second upload always shows the new result
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
         return resp
