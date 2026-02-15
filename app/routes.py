@@ -17,7 +17,7 @@ from app.config import (
     TRIP_HISTORY_PATH,
     clear_video_dirs,
 )
-from app.utils import get_annotated_path, send_annotated_response
+from app.utils import get_annotated_path, get_original_path, send_annotated_response
 
 MAX_HISTORY = 30
 
@@ -78,6 +78,21 @@ def register_routes(app):
         history = _load_history()
 
         sample_available = bool(_get_sample_video_path())
+        if request.method == "GET" and request.args.get("view") == "gallery":
+            # Show all annotated videos at once (detection gallery)
+            gallery_entries = []
+            for entry in history:
+                path, _ = get_annotated_path(entry["output_id"])
+                gallery_entries.append({
+                    **entry,
+                    "video_available": path is not None and path.exists(),
+                })
+            return render_template(
+                "gallery.html",
+                history=history,
+                gallery_entries=gallery_entries,
+                sample_available=sample_available,
+            )
         if request.method == "GET" and request.args.get("output_id"):
             oid = request.args.get("output_id", "").strip()
             if oid.isdigit():
@@ -153,12 +168,15 @@ def register_routes(app):
             history = _load_history()
 
         cache_bust = int(time.time() * 1000) if summary else None
+        orig_path, _ = get_original_path(output_id) if summary and output_id else (None, None)
+        original_available = orig_path is not None and orig_path.exists() if orig_path else False
         resp = make_response(render_template(
             "index.html",
             summary=summary,
             output_id=output_id,
             annotated_filename=annotated_filename,
             video_available=video_available,
+            original_available=original_available,
             history=history,
             cache_bust=cache_bust,
             sample_available=bool(_get_sample_video_path()),
@@ -192,6 +210,14 @@ def register_routes(app):
             return "No output yet", 404
         as_attachment = request.args.get("download") == "1"
         return send_annotated_response(path, mimetype, as_attachment, path.name)
+
+    @app.route("/original/<output_id>")
+    def original(output_id):
+        """Serve the uploaded source video for this run (for sync view)."""
+        path, mimetype = get_original_path(output_id)
+        if path is None or not path.exists():
+            return "Not found", 404
+        return send_annotated_response(path, mimetype, False, path.name)
 
     @app.route("/results/<int:output_id>.json")
     def export_results(output_id):

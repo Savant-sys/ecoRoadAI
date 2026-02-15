@@ -1,7 +1,27 @@
 """Helpers for finding and sending annotated output files."""
+from pathlib import Path
+
 from flask import send_file
 
-from app.config import OUTPUT_DIR, VIDEO_EXT_MIME
+from app.config import OUTPUT_DIR, UPLOADS_DIR, VIDEO_EXT_MIME
+
+
+def get_original_path(output_id):
+    """Return (path, mimetype) for the uploaded source file for this run (uploads/<id>_*), or (None, None)."""
+    if output_id is None or not str(output_id).strip().isdigit():
+        return None, None
+    oid = str(output_id).strip()
+    prefix = oid + "_"
+    if not UPLOADS_DIR.exists():
+        return None, None
+    for f in UPLOADS_DIR.iterdir():
+        if f.is_file() and f.name.startswith(prefix):
+            ext = f.suffix.lower()
+            mime = VIDEO_EXT_MIME.get(ext)
+            if mime:
+                return f.resolve(), mime
+            return f.resolve(), "video/mp4"  # fallback
+    return None, None
 
 
 def get_annotated_path(output_id):

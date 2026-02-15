@@ -518,6 +518,12 @@
       color: var(--text-2);
       margin-bottom: 8px;
     }
+    .sync-videos {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 640px) { .sync-videos { grid-template-columns: 1fr; } }
+    .sync-cell .media-wrap { margin-top: 0; }
     .media-info {
       margin-top: 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
       font-size: 12px; color: var(--text-4);
@@ -816,6 +822,9 @@
       font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--text-2);
       margin-bottom: 12px; letter-spacing: -0.02em;
     }
+    .history-actions { margin-bottom: 10px; font-size: 13px; }
+    .history-actions a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .history-actions a:hover { text-decoration: underline; }
     .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
     .history-item { margin: 0; }
     .history-link {
@@ -1106,6 +1115,7 @@
   {% if history and history|length > 0 %}
   <section class="history-section" aria-label="Past analyses">
     <h3 class="history-title">Recent analyses</h3>
+    <p class="history-actions"><a href="/?view=gallery">View all detection videos at once</a></p>
     <ul class="history-list">
       {% for entry in history %}
       <li class="history-item">
@@ -1155,6 +1165,41 @@
     ensureCorrectVideo();
   })();
   </script>
+  <script>
+  (function(){
+    var groups = {};
+    document.querySelectorAll('video[data-sync-group]').forEach(function(v){
+      var g = v.getAttribute('data-sync-group');
+      if(!groups[g])groups[g]=[];
+      groups[g].push(v);
+    });
+    Object.keys(groups).forEach(function(g){
+      var list = groups[g];
+      var syncing = false;
+      function syncTime(source){
+        if(syncing)return;
+        var t = source.currentTime;
+        if(isNaN(t))return;
+        syncing=true;
+        list.forEach(function(v){ if(v!==source)v.currentTime=t; });
+        syncing=false;
+      }
+      function syncPlayback(source){
+        if(syncing)return;
+        syncing=true;
+        if(source.paused) list.forEach(function(v){ if(v!==source)v.pause(); });
+        else list.forEach(function(v){ if(v!==source)v.play().catch(function(){}); });
+        syncing=false;
+      }
+      list.forEach(function(v){
+        v.addEventListener('play',function(){ syncPlayback(v); });
+        v.addEventListener('pause',function(){ syncPlayback(v); });
+        v.addEventListener('seeked',function(){ syncTime(v); });
+        v.addEventListener('timeupdate',function(){ if(!v.paused) syncTime(v); });
+      });
+    });
+  })();
+  </script>
 
   <!-- ALERT OVERLAY -->
   {% if summary.risk_level in ['high','medium'] or summary.get('playback_alerts') %}
@@ -1181,9 +1226,34 @@
       <!-- Left: media -->
       <div class="panel panel-media">
         <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Your clip with AI bounding boxes on detected objects. &quot;fr&quot; = frames we analyzed (e.g. 30 fr/sec at 30 fps).</span></span></div>
+        {% if video_available and original_available %}
+        <div class="sync-videos" id="sync-videos-{{ output_id }}">
+          <div class="sync-cell">
+            <span class="media-badge">Original</span>
+            <div class="media-wrap">
+              <video id="original-{{ output_id }}" src="/original/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto" data-sync-group="{{ output_id }}"></video>
+            </div>
+          </div>
+          <div class="sync-cell">
+            <span class="media-badge">Detection</span>
+            <div class="media-wrap">
+              <video id="annotated-{{ output_id }}" data-output-id="{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto" data-sync-group="{{ output_id }}"></video>
+            </div>
+          </div>
+        </div>
+        {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
+        <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
+          <div class="tl-label">Alerts<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Click a number to jump to that moment in the video. Each marker is a flagged moment: higher risk, improvement, or CO₂ change.</span></span></div>
+          <div class="alert-timeline-bar">
+            {% for a in summary.playback_alerts %}
+            <button type="button" class="alert-marker {% if a.get('alert_type') == 'positive' %}positive{% else %}risk-{{ a.risk_level }}{% endif %}" data-index="{{ loop.index0 }}" data-time="{{ a.time }}" data-left="{{ (a.time / summary.duration_sec * 100) }}" title="{% if a.get('alert_type') == 'positive' %}✓ Good driving{% else %}⚠ Alert{% endif %} {{ loop.index }} at {{ a.time_label }}">{{ loop.index }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% elif video_available %}
         <span class="media-badge">Annotated</span>
         <div class="media-wrap">
-          {% if video_available %}
           <video id="annotated-{{ output_id }}" data-output-id="{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
           <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
@@ -1195,10 +1265,12 @@
             </div>
           </div>
           {% endif %}
-          {% else %}
-          <div class="video-unavailable">Video unavailable. Metrics below.</div>
-          {% endif %}
         </div>
+        {% else %}
+        <div class="media-wrap">
+          <div class="video-unavailable">Video unavailable. Metrics below.</div>
+        </div>
+        {% endif %}
         <div class="media-info">
           <span>{{ summary.frames_processed }} frames</span>
           {% if video_available %}<a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.mp4' }}">Download video</a>{% endif %}
@@ -1622,7 +1694,7 @@
   </script>
   <script>
   (function(){
-    var ov=document.getElementById('alert-overlay'),vid=document.querySelector('video'),
+    var ov=document.getElementById('alert-overlay'),vid=document.querySelector('video[data-output-id]')||document.querySelector('video'),
         box=document.getElementById('alert-box'),tEl=document.getElementById('a-time'),
         hEl=document.getElementById('a-title'),bEl=document.getElementById('a-body'),
         dis=document.getElementById('a-dismiss');
