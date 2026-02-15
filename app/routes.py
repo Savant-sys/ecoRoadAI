@@ -13,6 +13,7 @@ from app.config import (
     OUTPUT_DIR,
     RUN_HISTORY_PATH,
     SUMMARIES_DIR,
+    TRIP_HISTORY_PATH,
     clear_video_dirs,
 )
 from app.utils import get_annotated_path, send_annotated_response
@@ -128,11 +129,12 @@ def register_routes(app):
 
     @app.route("/clear", methods=["POST"])
     def clear_uploads():
-        """Delete all uploads and annotated outputs. Only when user clicks Clear button."""
+        """Delete all uploads, annotated outputs, and analytics history."""
         clear_video_dirs()
-        # Reset run history and saved summaries so the list is not stale
-        if RUN_HISTORY_PATH.exists():
-            RUN_HISTORY_PATH.write_text("[]")
+        # Reset all analytics/history so nothing is left
+        RUN_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+        RUN_HISTORY_PATH.write_text("[]")
+        TRIP_HISTORY_PATH.write_text("[]")
         if SUMMARIES_DIR.exists():
             for f in SUMMARIES_DIR.iterdir():
                 if f.is_file():
