@@ -72,6 +72,13 @@ The app uses a **pre-trained** YOLO model (`yolov8n.pt`). Optional fine-tuning o
 
 ---
 
+## Documentation
+
+- **README** (this file) — overview, run instructions, tech, project layout.
+- **docs/** — [Setup](docs/SETUP.md), [Pipeline overview](docs/PIPELINE.md).
+
+---
+
 ## Project layout
 
 | Path | Purpose |
@@ -84,6 +91,7 @@ The app uses a **pre-trained** YOLO model (`yolov8n.pt`). Optional fine-tuning o
 | `scripts/` | `train_bdd100k.py`, `restore_og_model.py` |
 | `videos/` | `uploads/`, `output/`, `analytics/` (created at runtime; cleared only via **Clear uploads & results**) |
 | `samples/` | Put `sample.mp4` here for **Try with sample** |
+| `docs/` | [SETUP.md](docs/SETUP.md), [PIPELINE.md](docs/PIPELINE.md) |
 
 ---
 
