@@ -16,11 +16,25 @@ from app.config import (
     SUMMARIES_DIR,
     TRIP_HISTORY_PATH,
     clear_video_dirs,
-    get_sample_video_path,
 )
 from app.utils import get_annotated_path, send_annotated_response
 
 MAX_HISTORY = 30
+
+SAMPLES_DIR = ROOT / "samples"
+BDD100K_DIR = ROOT / "bdd100k"
+
+
+def _get_sample_video_path():
+    """Return path to a sample video if one exists (samples/sample.mp4 or first bdd100k/*.mov), else None."""
+    sample = SAMPLES_DIR / "sample.mp4"
+    if sample.exists():
+        return sample
+    if BDD100K_DIR.exists():
+        for ext in (".mov", ".mp4", ".webm"):
+            for p in BDD100K_DIR.glob("*" + ext):
+                return p
+    return None
 
 
 def _load_history():
@@ -63,7 +77,7 @@ def register_routes(app):
         video_available = True
         history = _load_history()
 
-        sample_available = bool(get_sample_video_path())
+        sample_available = bool(_get_sample_video_path())
         if request.method == "GET" and request.args.get("output_id"):
             oid = request.args.get("output_id", "").strip()
             if oid.isdigit():
@@ -77,7 +91,7 @@ def register_routes(app):
 
         elif request.method == "POST":
             use_sample = request.form.get("use_sample") == "1"
-            sample_path = get_sample_video_path() if use_sample else None
+            sample_path = _get_sample_video_path() if use_sample else None
             f = None if use_sample else (request.files.get("video") or request.files.get("image") or request.files.get("media"))
             if not use_sample and (not f or f.filename == ""):
                 return render_template(
@@ -87,7 +101,7 @@ def register_routes(app):
                     annotated_filename=None,
                     video_available=True,
                     history=history,
-                    sample_available=bool(get_sample_video_path()),
+                    sample_available=bool(_get_sample_video_path()),
                 )
             if use_sample and not sample_path:
                 return render_template(
@@ -115,7 +129,7 @@ def register_routes(app):
                         annotated_filename=None,
                         video_available=True,
                         history=history,
-                        sample_available=bool(get_sample_video_path()),
+                        sample_available=bool(_get_sample_video_path()),
                     )
                 safe_name = (f.filename or "upload").replace("..", "").replace("/", "_")
                 media_path = UPLOADS_DIR / f"{output_id}_{safe_name}"
@@ -147,7 +161,7 @@ def register_routes(app):
             video_available=video_available,
             history=history,
             cache_bust=cache_bust,
-            sample_available=bool(get_sample_video_path()),
+            sample_available=bool(_get_sample_video_path()),
         ))
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
