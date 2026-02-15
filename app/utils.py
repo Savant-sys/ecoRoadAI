@@ -46,15 +46,16 @@ def get_annotated_path(output_id):
 
 
 def send_annotated_response(path, mimetype, as_attachment, download_name):
-    """Send file with no-cache headers so the correct video always loads."""
+    """Send file. Use conditional=True (Range support) for playback so video seeking works."""
     r = send_file(
         path,
         mimetype=mimetype,
-        conditional=False,  # disable 304 so browser always gets fresh content for this run
+        conditional=not as_attachment,  # Range requests for playback = seekable timeline
         as_attachment=as_attachment,
         download_name=download_name if as_attachment else None,
     )
-    r.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    r.headers["Pragma"] = "no-cache"
-    r.headers["Expires"] = "0"
+    if as_attachment:
+        r.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        r.headers["Pragma"] = "no-cache"
+        r.headers["Expires"] = "0"
     return r
