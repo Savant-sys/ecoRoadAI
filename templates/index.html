@@ -250,9 +250,24 @@
       transition: color 0.2s, border-color 0.2s, background 0.2s;
     }
     .pill:hover { color: var(--text); border-color: var(--border2); background: var(--card); }
-    .pill-torch { border-color: rgba(234,179,8,.25); }
-    .pill-yolo { border-color: rgba(139,92,246,.25); }
-    .pill-gpu { border-color: rgba(34,197,94,.3); color: var(--green-bright); }
+    .pill-torch {
+      border-color: rgba(251,191,36,.45);
+      background: rgba(251,191,36,.08);
+      color: #fcd34d;
+    }
+    .pill-torch:hover { border-color: rgba(251,191,36,.55); background: rgba(251,191,36,.12); }
+    .pill-yolo {
+      border-color: rgba(167,139,250,.5);
+      background: rgba(139,92,246,.1);
+      color: #c4b5fd;
+    }
+    .pill-yolo:hover { border-color: rgba(167,139,250,.6); background: rgba(139,92,246,.15); }
+    .pill-gpu {
+      border-color: rgba(34,197,94,.5);
+      background: rgba(34,197,94,.12);
+      color: var(--green-bright);
+    }
+    .pill-gpu:hover { border-color: rgba(34,197,94,.6); background: rgba(34,197,94,.18); }
 
     .hero {
       background:
