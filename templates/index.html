@@ -469,6 +469,27 @@
     .section-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(34,197,94,.45); }
     .section-label .badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; background: var(--bg-float); color: var(--text-2); font-weight: 600; margin-left: 6px; border: 1px solid var(--border); }
 
+    /* Info icon + popover (click to show explanation) */
+    .info-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
+    .info-icon {
+      width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border2);
+      background: var(--bg-float); color: var(--text-3); cursor: pointer;
+      font-size: 11px; font-weight: 700; font-style: italic; line-height: 1;
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .info-icon:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .info-icon:focus { outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
+    .info-popover {
+      display: none; position: absolute; left: 0; top: 100%; margin-top: 8px; z-index: 100;
+      min-width: 280px; max-width: 420px; padding: 14px 18px; font-size: 13px; line-height: 1.55;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      color: var(--text-2); font-weight: 500; box-shadow: var(--shadow2);
+      border-left: 4px solid var(--accent);
+    }
+    .info-popover.visible { display: block; }
+    .info-wrap .info-popover { white-space: normal; }
+
     video, .out-img {
       width: 100%; border-radius: var(--radius); border: 1px solid var(--border); display: block;
       background: var(--bg-raised);
@@ -1067,14 +1088,14 @@
     <div class="grid-main">
       <!-- Left: media -->
       <div class="panel panel-media">
-        <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span></div>
+        <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Your clip with detection boxes drawn on it. &quot;fr&quot; = frames processed (e.g. 30 fr/sec at 30 fps).</span></span></div>
         <div class="media-wrap">
           <span class="media-badge">Annotated</span>
           {% if video_available %}
           <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
           <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
-            <div class="tl-label">Alerts</div>
+            <div class="tl-label">Alerts<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Click a number to jump to that moment in the video and see why we flagged it (risk up, improvement, or CO₂ change).</span></span></div>
             <div class="alert-timeline-bar">
               {% for a in summary.playback_alerts %}
               <button type="button" class="alert-marker {% if a.get('alert_type') == 'positive' %}positive{% else %}risk-{{ a.risk_level }}{% endif %}" data-index="{{ loop.index0 }}" data-time="{{ a.time }}" style="left: {{ (a.time / summary.duration_sec * 100) }}%;" title="{% if a.get('alert_type') == 'positive' %}✓ Good driving{% else %}⚠ Alert{% endif %} {{ loop.index }} at {{ a.time_label }}">{{ loop.index }}</button>
@@ -1099,7 +1120,7 @@
 
           <!-- Perception -->
           <div class="stage">
-            <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Perception</div>
+            <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Perception<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">What the AI &quot;saw&quot; — average count per frame: cars (incl. truck/bus/motorcycle), people (pedestrians/riders), traffic lights, stop/signs.</span></span></div>
             <div class="chips">
               <span class="chip"><span class="ci">🚗</span> {{ ((summary.detections.get('car',0)+summary.detections.get('truck',0)+summary.detections.get('bus',0)+summary.detections.get('motorcycle',0))|round(0)|int) }}</span>
               <span class="chip"><span class="ci">🚶</span> {{ ((summary.detections.get('person',0)+summary.detections.get('pedestrian',0)+summary.detections.get('rider',0))|round(0)|int) }}</span>
@@ -1113,9 +1134,9 @@
             <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Decision</div>
             {% if summary.get('scene_type') %}
             <div class="chips" style="margin-bottom:8px">
-              <span class="chip chip-scene">{{ summary.scene_type|upper }}</span>
-              {% if summary.get('co2_gkm') %}<span class="chip chip-co2">{{ summary.co2_gkm }} g/km CO2</span>{% endif %}
-              {% if summary.get('fuel_penalty_pct') and summary.fuel_penalty_pct > 0 %}<span class="chip chip-fuel">+{{ summary.fuel_penalty_pct }}% fuel</span>{% endif %}
+              <span class="chip chip-scene">{{ summary.scene_type|upper }}</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Scene type: highway, urban, intersection, or residential — inferred from traffic and signs.</span></span>
+              {% if summary.get('co2_gkm') %}<span class="chip chip-co2">{{ summary.co2_gkm }} g/km CO2</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Estimated CO₂ emission rate (g/km) for this driving context. From scene, not real fuel data.</span></span>{% endif %}
+              {% if summary.get('fuel_penalty_pct') and summary.fuel_penalty_pct > 0 %}<span class="chip chip-fuel">+{{ summary.fuel_penalty_pct }}% fuel</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Extra fuel vs ideal cruising. E.g. +30% = this scene typically uses ~30% more fuel per km.</span></span>{% endif %}
             </div>
             {% endif %}
             <div class="metrics">
@@ -1123,27 +1144,27 @@
                 <div class="eco-ring-inner">{{ summary.eco_score }}</div>
               </div>
               <div class="mbox risk-{{ summary.risk_level }}">
-                <div class="mbox-k">Risk</div>
+                <div class="mbox-k">Risk<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Low / medium / high: how much going wrong here would matter (e.g. lots of cars + pedestrians = high).</span></span></div>
                 <div class="mbox-v">{{ summary.risk_level|upper }}</div>
               </div>
               <div class="mbox">
-                <div class="mbox-k">Eco Score</div>
+                <div class="mbox-k">Eco Score<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">0–100: how eco-friendly the conditions are. Higher = better for efficiency. Based on scene, not your throttle.</span></span></div>
                 <div class="mbox-v">{{ summary.eco_score }}<span class="mbox-sm">/100</span></div>
               </div>
             </div>
-            {% if summary.get('co2_impact') %}<div class="co2-line"><span class="mbox-k">CO₂ impact</span><span class="co2-val">{{ summary.co2_impact }}</span></div>{% endif %}
+            {% if summary.get('co2_impact') %}<div class="co2-line"><span class="mbox-k">CO₂ impact<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Short label for the emission level (e.g. low = efficient cruising, high = stop-and-go).</span></span></span><span class="co2-val">{{ summary.co2_impact }}</span></div>{% endif %}
             {% if summary.get('comparison') %}<div class="compare-note">{{ summary.comparison }}</div>{% endif %}
             {% if summary.get('skill_focus') %}
-            <div class="focus-tags">
+            <div class="focus-tags"><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Which driving skills matter most for this type of scene (e.g. smoothness, anticipation).</span></span>
               {% for s in summary.skill_focus %}<span class="focus-tag">{{ s }}</span>{% endfor %}
             </div>
             {% endif %}
-            {% if summary.get('driver_assessment') %}<div class="assess">{{ summary.driver_assessment }}</div>{% endif %}
+            {% if summary.get('driver_assessment') %}<div class="assess"><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">One-line summary of what to focus on for this drive.</span></span> {{ summary.driver_assessment }}</div>{% endif %}
           </div>
 
           <!-- Recommendations -->
           <div class="stage">
-            <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Recommendations</div>
+            <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Recommendations<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Concrete tips from the analysis to drive smoother and use less fuel.</span></span></div>
             <ul class="tips-list">
               {% for t in summary.tips %}{% if loop.index <= 2 %}<li>{{ t }}</li>{% endif %}{% endfor %}
             </ul>
@@ -1157,7 +1178,7 @@
         <!-- Driving Style Classification -->
         {% if ts.get('driving_style') %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Driving Style</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Driving Style<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Label from your trip pattern: smoothness, anticipation, and efficiency scores (0–100). From scene analysis, not OBD.</span></span></div>
           <div class="style-classification">
             <div class="style-badge">{{ ts.driving_style.driving_style }}</div>
             {% if ts.driving_style.characteristics %}
@@ -1198,7 +1219,7 @@
         {% if ts.get('fuel_consumption') %}
         {% set fuel = ts.fuel_consumption %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Fuel & Cost</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Fuel & Cost<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Estimated from CO₂ and distance. Not from your car&#39;s sensors — for comparison only.</span></span></div>
           <div class="fuel-grid">
             <div class="fuel-metric">
               <div class="fuel-icon">⛽</div>
@@ -1241,7 +1262,7 @@
         {% if ts.get('co2_phases') %}
         {% set phases = ts.co2_phases %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ by Phase</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ by Phase<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Share of trip in acceleration, cruising, braking, idling — and avg CO₂ (g/km) per phase.</span></span></div>
           <div class="phase-breakdown">
             <div class="phase-item">
               <div class="phase-header">
@@ -1388,7 +1409,7 @@
 
         <!-- Original Trip Summary -->
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Total CO₂, distance (estimated), and % of trip in low/medium/high risk. Best/worst = time ranges.</span></span></div>
           <div class="trip-chips">
             <span class="chip chip-co2">{{ ts.total_co2_g }}g CO2</span>
             <span class="chip">{{ ts.avg_co2_gkm }} g/km avg</span>
@@ -1434,6 +1455,23 @@
   // Raw toggle
   var rt=document.getElementById('raw-toggle'),rc=document.getElementById('raw-content');
   if(rt)rt.onclick=function(){var o=rc.classList.toggle('open');rt.innerHTML=(o?'&#9660;':'&#9654;')+' Raw detections';};
+
+  // Info icon: click to show/hide popover, close others and close on outside click
+  (function(){
+    var icons=document.querySelectorAll('.info-icon');
+    var popovers=document.querySelectorAll('.info-popover');
+    function closeAll(){ popovers.forEach(function(p){ p.classList.remove('visible'); }); }
+    icons.forEach(function(icon){
+      icon.addEventListener('click',function(e){
+        e.stopPropagation();
+        var pop=icon.nextElementSibling;
+        if(!pop||!pop.classList.contains('info-popover'))return;
+        var isOpen=pop.classList.toggle('visible');
+        popovers.forEach(function(p){ if(p!==pop)p.classList.remove('visible'); });
+      });
+    });
+    document.addEventListener('click',function(){ closeAll(); });
+  })();
 
   // Animated eco score counter
   (function(){
