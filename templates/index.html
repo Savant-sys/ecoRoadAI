@@ -1187,8 +1187,13 @@
       function syncPlayback(source){
         if(syncing)return;
         syncing=true;
-        if(source.paused) list.forEach(function(v){ if(v!==source)v.pause(); });
-        else list.forEach(function(v){ if(v!==source)v.play().catch(function(){}); });
+        if(source.paused){
+          list.forEach(function(v){ if(v!==source)v.pause(); });
+        } else {
+          var t=source.currentTime;
+          if(!isNaN(t)) list.forEach(function(v){ if(v!==source)v.currentTime=t; });
+          list.forEach(function(v){ if(v!==source)v.play().catch(function(){}); });
+        }
         syncing=false;
       }
       list.forEach(function(v){
@@ -1226,33 +1231,8 @@
       <!-- Left: media -->
       <div class="panel panel-media">
         <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Your clip with AI bounding boxes on detected objects. &quot;fr&quot; = frames we analyzed (e.g. 30 fr/sec at 30 fps).</span></span></div>
-        {% if video_available and original_available %}
-        <div class="sync-videos" id="sync-videos-{{ output_id }}">
-          <div class="sync-cell">
-            <span class="media-badge">Original</span>
-            <div class="media-wrap">
-              <video id="original-{{ output_id }}" src="/original/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto" data-sync-group="{{ output_id }}"></video>
-            </div>
-          </div>
-          <div class="sync-cell">
-            <span class="media-badge">Detection</span>
-            <div class="media-wrap">
-              <video id="annotated-{{ output_id }}" data-output-id="{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto" data-sync-group="{{ output_id }}"></video>
-            </div>
-          </div>
-        </div>
-        {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
-        <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
-          <div class="tl-label">Alerts<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Click a number to jump to that moment in the video. Each marker is a flagged moment: higher risk, improvement, or CO₂ change.</span></span></div>
-          <div class="alert-timeline-bar">
-            {% for a in summary.playback_alerts %}
-            <button type="button" class="alert-marker {% if a.get('alert_type') == 'positive' %}positive{% else %}risk-{{ a.risk_level }}{% endif %}" data-index="{{ loop.index0 }}" data-time="{{ a.time }}" data-left="{{ (a.time / summary.duration_sec * 100) }}" title="{% if a.get('alert_type') == 'positive' %}✓ Good driving{% else %}⚠ Alert{% endif %} {{ loop.index }} at {{ a.time_label }}">{{ loop.index }}</button>
-            {% endfor %}
-          </div>
-        </div>
-        {% endif %}
-        {% elif video_available %}
-        <span class="media-badge">Annotated</span>
+        {% if video_available %}
+        <span class="media-badge">Video</span>
         <div class="media-wrap">
           <video id="annotated-{{ output_id }}" data-output-id="{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
@@ -1748,16 +1728,19 @@
     vid.addEventListener('pause',function(){if(pid){clearInterval(pid);pid=null;}});
     vid.addEventListener('ended',function(){if(pid){clearInterval(pid);pid=null;}});
     vid.addEventListener('seeked',function(){var t=vid.currentTime;for(var i=0;i<pa.length;i++)if(pa[i].time>t+0.5)delete fired[i];});
-    // Click timeline marker -> seek and show alert immediately
+    // Click timeline marker -> seek all synced videos to time, play all together, show alert
     document.querySelectorAll('.alert-marker').forEach(function(btn){
       btn.addEventListener('click',function(){
         var idx=parseInt(btn.getAttribute('data-index'));
         var t=parseFloat(btn.getAttribute('data-time'));
         if(!isNaN(t)&&!isNaN(idx)&&vid&&pa[idx]){
-          vid.pause();
-          vid.currentTime=t;
+          var toSync = vid.getAttribute('data-sync-group')
+            ? document.querySelectorAll('video[data-sync-group="'+vid.getAttribute('data-sync-group')+'"]')
+            : [vid];
+          toSync.forEach(function(v){ v.currentTime=t; });
           fired[idx]=1;
           show(pa[idx]);
+          toSync.forEach(function(v){ v.play().catch(function(){}); });
         }
       });
     });
