@@ -4,7 +4,7 @@
 
 EcoRoad AI analyzes dashcam (or any road) video with computer vision and gives you **eco and safety insights** — no car sensors or GPS required. Upload a clip, get an annotated video plus perception counts, scene type, risk level, eco score, CO₂ and fuel estimates, driving style, and actionable tips.
 
-**Demo video:** [Watch on YouTube](https://youtu.be/5TSmRMDbp1Q)
+**Demo video:** [Watch on YouTube](https://youtu.be/i7L7Th8KhuA)
 
 ---
 
