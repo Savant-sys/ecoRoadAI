@@ -1066,7 +1066,7 @@ def calculate_fuel_consumption(avg_co2_gkm, distance_km, duration_sec):
         
         # Extrapolate to annual (assume 12,000 miles = 19,312 km/year)
         annual_km = 19312
-        trips_per_year = annual_km / distance_km if distance_km > 0 else 0
+        trips_per_year = min(annual_km / distance_km, 600) if distance_km > 0 else 0  # cap to avoid huge numbers on short clips
         potential_savings_year_usd = trip_savings * trips_per_year
     else:
         potential_savings_year_usd = 0
@@ -1199,7 +1199,7 @@ def generate_actionable_insights(driving_style_data, fuel_data, co2_phases, trip
             "difficulty": "Medium"
         })
     
-    return insights[:4]  # Return top 4 most impactful
+    return insights[:2]  # Keep demo concise
 
 
 def eco_safety_rules(counts):
@@ -1305,7 +1305,7 @@ def eco_safety_rules(counts):
         "comparison": co2["comparison"],
         "scene_type": scene["scene_type"],
         "scene_description": scene["description"],
-        "tips": tips,
+        "tips": tips[:2],
         "skill_focus": skill_focus[:4],
         "driver_assessment": driver_assessment,
     }
@@ -1429,14 +1429,15 @@ def main():
         if trip_summary:
             # Rank strongest moments first for quick review cards.
             ranked = sorted(playback_alerts, key=lambda a: a.get("impact_score", 0), reverse=True)
-            trip_summary["top_alerts"] = ranked[:3]
+            trip_summary["top_alerts"] = ranked[:2]
             trip_summary["alert_mix"] = {
                 "warning_count": sum(1 for a in playback_alerts if a.get("alert_type") != "positive"),
                 "positive_count": sum(1 for a in playback_alerts if a.get("alert_type") == "positive"),
             }
             trends, history = _update_trip_history_and_trends(trip_summary)
             trip_summary["trends"] = trends
-            trip_summary["personalized_targets"] = _build_personalized_targets(trip_summary, history[:-1])
+            all_targets = _build_personalized_targets(trip_summary, history[:-1])
+            trip_summary["personalized_targets"] = dict(list(all_targets.items())[:2])
             trip_summary["savings_simulation"] = _build_savings_simulation(trip_summary)
 
     print("\n=== EcoRoad AI Summary ===")

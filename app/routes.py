@@ -5,9 +5,16 @@ import sys
 import time
 from datetime import datetime
 
-from flask import request, render_template, make_response
+from flask import request, render_template, make_response, redirect, url_for
 
-from app.config import ROOT, UPLOADS_DIR, OUTPUT_DIR, RUN_HISTORY_PATH, SUMMARIES_DIR
+from app.config import (
+    ROOT,
+    UPLOADS_DIR,
+    OUTPUT_DIR,
+    RUN_HISTORY_PATH,
+    SUMMARIES_DIR,
+    clear_video_dirs,
+)
 from app.utils import get_annotated_path, send_annotated_response
 
 MAX_HISTORY = 30
@@ -118,6 +125,22 @@ def register_routes(app):
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
         return resp
+
+    @app.route("/clear", methods=["POST"])
+    def clear_uploads():
+        """Delete all uploads and annotated outputs. Only when user clicks Clear button."""
+        clear_video_dirs()
+        # Reset run history and saved summaries so the list is not stale
+        if RUN_HISTORY_PATH.exists():
+            RUN_HISTORY_PATH.write_text("[]")
+        if SUMMARIES_DIR.exists():
+            for f in SUMMARIES_DIR.iterdir():
+                if f.is_file():
+                    try:
+                        f.unlink()
+                    except OSError:
+                        pass
+        return redirect(url_for("index"))
 
     @app.route("/annotated")
     @app.route("/annotated/<output_id>")

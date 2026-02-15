@@ -16,12 +16,18 @@ TRIP_HISTORY_PATH = ANALYTICS_DIR / "trip_history.json"
 RUN_HISTORY_PATH = ANALYTICS_DIR / "run_history.json"  # list of past analyzed videos
 SUMMARIES_DIR = ANALYTICS_DIR / "summaries"  # persisted summary per output_id for history view
 
-# Directories cleared on app startup (clean slate when you rerun app.py)
+# Directories that can be cleared via the "Clear uploads & results" button
 VIDEO_CLEANUP_DIRS = (UPLOADS_DIR, OUTPUT_DIR, DETECT_DIR, OUTPUT_PARALLEL_DIR)
 
 
+def ensure_video_dirs():
+    """Create upload/output dirs if missing. Does not delete anything."""
+    for d in (*VIDEO_CLEANUP_DIRS, ANALYTICS_DIR, SUMMARIES_DIR.parent):
+        d.mkdir(parents=True, exist_ok=True)
+
+
 def clear_video_dirs():
-    """Remove all contents of uploads, output, detect, output_parallel so each app run starts clean."""
+    """Remove all contents of uploads, output, detect, output_parallel. Call only when user clicks Clear."""
     for d in VIDEO_CLEANUP_DIRS:
         if not d.exists():
             d.mkdir(parents=True, exist_ok=True)

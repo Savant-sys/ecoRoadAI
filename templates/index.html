@@ -270,6 +270,12 @@
       color: var(--green-bright);
     }
     .pill-gpu:hover { border-color: rgba(34,197,94,.6); background: rgba(34,197,94,.18); }
+    .clear-btn {
+      font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg-float); color: var(--text-3);
+      cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .clear-btn:hover { color: var(--red); border-color: rgba(239,68,68,.4); background: var(--red-soft); }
 
     .hero {
       background: var(--card);
@@ -878,13 +884,16 @@
       <span class="pill pill-torch">PyTorch</span>
       <span class="pill pill-yolo">YOLOv8</span>
       <span class="pill pill-gpu">CUDA</span>
+      <form id="clear-form" method="post" action="/clear" style="display:inline;" onsubmit="return confirm('Delete all uploads and annotated results?');">
+        <button type="submit" class="clear-btn" title="Delete all uploads and annotated videos">Clear uploads & results</button>
+      </form>
     </div>
   </nav>
 
   <!-- HERO UPLOAD -->
   <div class="hero">
     <h2 class="hero-head">Drive smarter. <span class="g">Drive greener.</span></h2>
-    <p class="hero-tagline">Drop a dashcam video — we’ll analyze risk, CO₂ impact, and surface time-synced coaching alerts so you can improve every trip.</p>
+    <p class="hero-tagline">Upload a dashcam clip. Get eco score, CO₂ impact, and coaching alerts.</p>
     <form id="upload-form" method="POST" enctype="multipart/form-data">
       <div class="hero-label">Upload video</div>
       <div class="hero-grid">
@@ -1015,7 +1024,7 @@
         {% if summary.tips %}<p>{{ summary.tips[0] }}</p>{% endif %}
       </div>
       <button type="button" class="a-cta" id="a-dismiss">Cool, got it</button>
-      <p class="a-disc">Scene-based analysis. Speed via optical flow (no telemetry).</p>
+      <p class="a-disc">Scene-based analysis.</p>
     </div>
   </div>
   {% endif %}
@@ -1028,14 +1037,14 @@
     <div class="grid-main">
       <!-- Left: media -->
       <div class="panel panel-media">
-        <div class="section-label"><span class="dot"></span> Perception Output<span class="badge">{{ summary.frames_processed }} frames</span></div>
+        <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span></div>
         <div class="media-wrap">
-          <span class="media-badge">Annotated video</span>
+          <span class="media-badge">Annotated</span>
           {% if video_available %}
           <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
           <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
-            <div class="tl-label">Alert moments</div>
+            <div class="tl-label">Alerts</div>
             <div class="alert-timeline-bar">
               {% for a in summary.playback_alerts %}
               <button type="button" class="alert-marker {% if a.get('alert_type') == 'positive' %}positive{% else %}risk-{{ a.risk_level }}{% endif %}" data-index="{{ loop.index0 }}" data-time="{{ a.time }}" style="left: {{ (a.time / summary.duration_sec * 100) }}%;" title="{% if a.get('alert_type') == 'positive' %}✓ Good driving{% else %}⚠ Alert{% endif %} {{ loop.index }} at {{ a.time_label }}">{{ loop.index }}</button>
@@ -1044,7 +1053,7 @@
           </div>
           {% endif %}
           {% else %}
-          <div class="video-unavailable">Video no longer available (session ended). Summary and metrics below.</div>
+          <div class="video-unavailable">Video unavailable. Metrics below.</div>
           {% endif %}
         </div>
         <div class="media-info">
@@ -1055,7 +1064,7 @@
 
       <!-- Right: pipeline -->
       <div class="panel panel-analysis">
-        <div class="section-label"><span class="dot"></span> Analysis</div>
+        <div class="section-label"><span class="dot"></span> Results</div>
         <div class="stages">
 
           <!-- Perception -->
@@ -1106,7 +1115,7 @@
           <div class="stage">
             <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Recommendations</div>
             <ul class="tips-list">
-              {% for t in summary.tips %}<li>{{ t }}</li>{% endfor %}
+              {% for t in summary.tips %}{% if loop.index <= 2 %}<li>{{ t }}</li>{% endif %}{% endfor %}
             </ul>
           </div>
         </div>
@@ -1118,7 +1127,7 @@
         <!-- Driving Style Classification -->
         {% if ts.get('driving_style') %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Driving Style Analysis</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Driving Style</div>
           <div class="style-classification">
             <div class="style-badge">{{ ts.driving_style.driving_style }}</div>
             {% if ts.driving_style.characteristics %}
@@ -1165,7 +1174,7 @@
               <div class="fuel-icon">⛽</div>
               <div class="fuel-data">
                 <div class="fuel-value">{{ fuel.liters_used }}L</div>
-                <div class="fuel-label">Fuel Used</div>
+                <div class="fuel-label">Used</div>
               </div>
             </div>
             <div class="fuel-metric">
@@ -1179,20 +1188,20 @@
               <div class="fuel-icon">🇺🇸</div>
               <div class="fuel-data">
                 <div class="fuel-value">{{ fuel.mpg_us }} MPG</div>
-                <div class="fuel-label">US Rating</div>
+                <div class="fuel-label">MPG</div>
               </div>
             </div>
             <div class="fuel-metric">
               <div class="fuel-icon">💵</div>
               <div class="fuel-data">
-                <div class="fuel-value">${{ fuel.cost_usd }}</div>
+                <div class="fuel-value">${{ fuel.cost_usd | round(2) }}</div>
                 <div class="fuel-label">Trip Cost</div>
               </div>
             </div>
           </div>
           {% if fuel.potential_savings_year_usd > 0 %}
           <div class="savings-callout">
-            <strong>💰 Potential Annual Savings:</strong> ${{ fuel.potential_savings_year_usd }}/year if you drive at optimal efficiency
+            <strong>💰 Annual savings potential:</strong> ${{ fuel.potential_savings_year_usd | round(2) }}
           </div>
           {% endif %}
         </div>
@@ -1202,7 +1211,7 @@
         {% if ts.get('co2_phases') %}
         {% set phases = ts.co2_phases %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ Emissions by Phase</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ by Phase</div>
           <div class="phase-breakdown">
             <div class="phase-item">
               <div class="phase-header">
@@ -1239,9 +1248,9 @@
         <!-- Actionable Insights -->
         {% if ts.get('actionable_insights') and ts.actionable_insights %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green-bright)"></span> Your Action Plan</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green-bright)"></span> Action Plan</div>
           <div class="insights-list">
-            {% for insight in ts.actionable_insights %}
+            {% for insight in ts.actionable_insights %}{% if loop.index <= 2 %}
             <div class="insight-card">
               <div class="insight-header">
                 <span class="insight-category">{{ insight.category }}</span>
@@ -1251,7 +1260,7 @@
               <div class="insight-rec">✓ {{ insight.recommendation }}</div>
               <div class="insight-impact">{{ insight.impact }}</div>
             </div>
-            {% endfor %}
+            {% endif %}{% endfor %}
           </div>
         </div>
         {% endif %}
@@ -1259,9 +1268,9 @@
         <!-- Top Ranked Alerts -->
         {% if ts.get('top_alerts') and ts.top_alerts %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--red)"></span> Top Moments To Review</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--red)"></span> Key Moments</div>
           <div class="top-alerts">
-            {% for a in ts.top_alerts %}
+            {% for a in ts.top_alerts %}{% if loop.index <= 2 %}
             <div class="top-alert-item">
               <div class="top-alert-rank {{ 'positive' if a.get('alert_type') == 'positive' else 'warning' }}">{{ loop.index }}</div>
               <div class="top-alert-text">
@@ -1269,7 +1278,7 @@
               </div>
               <div class="top-alert-score">{{ a.get('impact_score', 0) }}/100</div>
             </div>
-            {% endfor %}
+            {% endif %}{% endfor %}
           </div>
         </div>
         {% endif %}
@@ -1278,10 +1287,10 @@
         {% if ts.get('trends') %}
         {% set tr = ts.trends %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Trend Snapshot</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Trends</div>
           <div class="trend-grid">
             <div class="trend-card">
-              <div class="trend-k">Trips analyzed</div>
+              <div class="trend-k">Trips</div>
               <div class="trend-v">{{ tr.trip_count }}</div>
             </div>
             <div class="trend-card">
@@ -1289,12 +1298,12 @@
               <div class="trend-v">{{ tr.avg_co2_last7 }} g/km</div>
             </div>
             <div class="trend-card">
-              <div class="trend-k">Delta CO2 vs prev</div>
+              <div class="trend-k">Δ CO2</div>
               <div class="trend-v">{{ tr.delta_co2_vs_prev }} g/km</div>
               <div class="trend-delta {{ 'up' if tr.delta_co2_vs_prev <= 0 else 'down' }}">{{ 'Improved' if tr.delta_co2_vs_prev <= 0 else 'Worse' }}</div>
             </div>
             <div class="trend-card">
-              <div class="trend-k">Smoothness delta</div>
+              <div class="trend-k">Δ Smooth</div>
               <div class="trend-v">{{ tr.delta_smoothness_vs_prev }}</div>
               <div class="trend-delta {{ 'up' if tr.delta_smoothness_vs_prev >= 0 else 'down' }}">{{ 'Improved' if tr.delta_smoothness_vs_prev >= 0 else 'Dropped' }}</div>
             </div>
@@ -1306,17 +1315,17 @@
         {% if ts.get('personalized_targets') %}
         {% set tgt = ts.personalized_targets %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Personalized Targets</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Targets</div>
           <div class="targets-list">
-            {% for k, v in tgt.items() %}
+            {% for k, v in tgt.items() %}{% if loop.index <= 2 %}
             <div class="target-item">
               <div class="target-head">
                 <span>{{ k|replace('_',' ') }}</span>
-                <span class="target-gap">{% if v.gap > 0 %}+{{ v.gap }} to target{% else %}target reached{% endif %}</span>
+                <span class="target-gap">{% if v.gap > 0 %}+{{ v.gap }}{% else %}✓{% endif %}</span>
               </div>
-              <div class="target-meta">Current {{ v.current }} - Baseline {{ v.baseline }} - Target {{ v.target }}</div>
+              <div class="target-meta">{{ v.current }} → {{ v.target }}</div>
             </div>
-            {% endfor %}
+            {% endif %}{% endfor %}
           </div>
         </div>
         {% endif %}
@@ -1325,23 +1334,23 @@
         {% if ts.get('savings_simulation') %}
         {% set sim = ts.savings_simulation %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green-bright)"></span> What-if Savings Simulator</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green-bright)"></span> Savings What-If</div>
           <div class="sim-grid">
             <div class="sim-card">
               <div class="sim-k">Smoothness +10</div>
-              <div class="sim-v">${{ sim.if_smoothness_plus_10 }}</div>
+              <div class="sim-v">${{ sim.if_smoothness_plus_10 | int }}</div>
             </div>
             <div class="sim-card">
               <div class="sim-k">Anticipation +10</div>
-              <div class="sim-v">${{ sim.if_anticipation_plus_10 }}</div>
+              <div class="sim-v">${{ sim.if_anticipation_plus_10 | int }}</div>
             </div>
             <div class="sim-card">
               <div class="sim-k">Efficiency +10</div>
-              <div class="sim-v">${{ sim.if_efficiency_plus_10 }}</div>
+              <div class="sim-v">${{ sim.if_efficiency_plus_10 | int }}</div>
             </div>
             <div class="sim-card">
               <div class="sim-k">If all targets hit</div>
-              <div class="sim-v">${{ sim.if_all_targets_hit }}</div>
+              <div class="sim-v">${{ sim.if_all_targets_hit | int }}</div>
             </div>
           </div>
         </div>
@@ -1349,7 +1358,7 @@
 
         <!-- Original Trip Summary -->
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip Overview</div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip</div>
           <div class="trip-chips">
             <span class="chip chip-co2">{{ ts.total_co2_g }}g CO2</span>
             <span class="chip">{{ ts.avg_co2_gkm }} g/km avg</span>
