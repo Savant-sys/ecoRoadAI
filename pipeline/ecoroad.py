@@ -242,7 +242,8 @@ def _run_batched_video(model, source, predict_kw, run_name, device):
 
     cap.release()
     writer.release()
-    return results_list, out_dir, fps
+    speed_est.finalize()
+    return results_list, out_dir, fps, speed_est
 
 
 def summarize_detections(results):
@@ -352,12 +353,23 @@ class SpeedEstimator:
     FLOW_TO_MPH = 12.0
     MAX_MPH = 75
     EMA_ALPHA = 0.12   # smoothing: ~8-frame half-life at 30fps (responsive but stable)
+    NOISE_FLOOR = 0.3  # below this flow magnitude, assume stopped (camera vibration)
+    IDLE_THRESHOLD_MPH = 2  # below this speed = idling
+    HARD_BRAKE_MPH_DROP = 10  # speed drop per second that counts as hard braking
 
     def __init__(self, fps=30.0):
         self.fps = fps
         self.prev_gray = None
         self.smooth_mph = None
         self._scale = 0.5
+        self._frame_idx = 0
+        # Idle tracking
+        self._idle_start = None
+        self.idle_events = []       # [{"start_frame": int, "duration_sec": float}, ...]
+        self.total_idle_frames = 0
+        # Hard braking tracking
+        self._speed_history = []    # rolling window of (frame_idx, mph)
+        self.hard_brake_events = [] # [{"frame": int, "speed_drop_mph": float}, ...]
 
     def update(self, frame_bgr, counts=None):
         """Feed a BGR frame, return smoothed speed in mph."""
@@ -379,9 +391,13 @@ class SpeedEstimator:
             # Use 75th percentile instead of median — more sensitive to dominant motion,
             # less affected by static regions (parked cars, sky leaking into ROI)
             p75 = float(np.percentile(mag, 75))
-            # Scale by fps ratio (calibrated at 30 fps)
-            raw_mph = p75 * self.FLOW_TO_MPH * (self.fps / 30.0)
-            raw_mph = min(raw_mph, self.MAX_MPH)
+            # Clamp to 0 below noise floor (camera vibration when parked)
+            if p75 < self.NOISE_FLOOR:
+                raw_mph = 0.0
+            else:
+                # Scale by fps ratio (calibrated at 30 fps)
+                raw_mph = p75 * self.FLOW_TO_MPH * (self.fps / 30.0)
+                raw_mph = min(raw_mph, self.MAX_MPH)
         else:
             # First frame: fall back to detection heuristic
             raw_mph = float(_assumed_mph(counts or {}))
@@ -394,7 +410,68 @@ class SpeedEstimator:
         else:
             self.smooth_mph += self.EMA_ALPHA * (raw_mph - self.smooth_mph)
 
-        return max(0, round(self.smooth_mph))
+        speed = max(0, round(self.smooth_mph))
+
+        # --- Idle detection ---
+        if speed < self.IDLE_THRESHOLD_MPH:
+            self.total_idle_frames += 1
+            if self._idle_start is None:
+                self._idle_start = self._frame_idx
+        else:
+            if self._idle_start is not None:
+                idle_frames = self._frame_idx - self._idle_start
+                if idle_frames >= 5 * self.fps:  # 5+ seconds = idle event
+                    self.idle_events.append({
+                        "start_frame": self._idle_start,
+                        "duration_sec": round(idle_frames / self.fps, 1),
+                    })
+                self._idle_start = None
+
+        # --- Hard braking detection ---
+        self._speed_history.append((self._frame_idx, speed))
+        window = int(self.fps)  # 1-second rolling window
+        # trim old entries
+        self._speed_history = [(f, s) for f, s in self._speed_history if self._frame_idx - f <= window]
+        if len(self._speed_history) >= 2:
+            max_speed_in_window = max(s for _, s in self._speed_history)
+            drop = max_speed_in_window - speed
+            if drop >= self.HARD_BRAKE_MPH_DROP:
+                # only record if not duplicate (last event was >1s ago)
+                if not self.hard_brake_events or (self._frame_idx - self.hard_brake_events[-1]["frame"]) > window:
+                    self.hard_brake_events.append({
+                        "frame": self._frame_idx,
+                        "speed_drop_mph": round(drop, 1),
+                    })
+
+        self._frame_idx += 1
+        return speed
+
+    def finalize(self):
+        """Call after last frame to close any open idle streak."""
+        if self._idle_start is not None:
+            idle_frames = self._frame_idx - self._idle_start
+            if idle_frames >= 5 * self.fps:
+                self.idle_events.append({
+                    "start_frame": self._idle_start,
+                    "duration_sec": round(idle_frames / self.fps, 1),
+                })
+            self._idle_start = None
+
+    def get_idle_stats(self, total_frames=None):
+        """Return idle summary."""
+        total = total_frames or self._frame_idx or 1
+        return {
+            "idle_events": self.idle_events,
+            "total_idle_sec": round(self.total_idle_frames / self.fps, 1),
+            "idle_pct": round(self.total_idle_frames / total * 100, 1),
+        }
+
+    def get_brake_stats(self):
+        """Return hard braking summary."""
+        return {
+            "hard_brake_events": self.hard_brake_events,
+            "hard_brake_count": len(self.hard_brake_events),
+        }
 
 
 def _draw_speed_on_frame(img, mph):
@@ -408,6 +485,42 @@ def _draw_speed_on_frame(img, mph):
     cv2.rectangle(img, (x - 4, y - th - 4), (x + tw + 4, y + 4), (0, 0, 0), -1)
     cv2.rectangle(img, (x - 4, y - th - 4), (x + tw + 4, y + 4), (255, 255, 255), 1)
     cv2.putText(img, text, (x, y), font, scale, (255, 255, 255), thick, cv2.LINE_AA)
+
+
+def detect_conditions(frame_bgr):
+    """
+    Detect lighting/weather conditions from a single frame.
+    Returns: "night", "overcast", or "day" based on brightness and contrast.
+    """
+    gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
+    mean_brightness = float(np.mean(gray))
+    std_brightness = float(np.std(gray))
+    if mean_brightness < 60:
+        return "night"
+    if mean_brightness < 100 and std_brightness < 35:
+        return "overcast"
+    return "day"
+
+
+def aggregate_conditions(results_list, fps):
+    """Sample frames at ~1 fps and return condition percentages."""
+    if not results_list:
+        return {"day_pct": 100, "night_pct": 0, "overcast_pct": 0, "primary": "day"}
+    step = max(1, int(fps))
+    counts = {"day": 0, "night": 0, "overcast": 0}
+    for i in range(0, len(results_list), step):
+        r = results_list[i]
+        if hasattr(r, "orig_img") and r.orig_img is not None:
+            cond = detect_conditions(r.orig_img)
+            counts[cond] += 1
+    total = sum(counts.values()) or 1
+    result = {
+        "day_pct": round(counts["day"] / total * 100, 1),
+        "night_pct": round(counts["night"] / total * 100, 1),
+        "overcast_pct": round(counts["overcast"] / total * 100, 1),
+    }
+    result["primary"] = max(counts, key=counts.get)
+    return result
 
 
 def _physics_tip(eco, counts):
@@ -454,22 +567,6 @@ def _alert_explanation(reason, alert_type):
         return "This bit was heavier on the emissions."
     return "Context shifted enough that we wanted to flag it."
 
-
-def _alert_confidence(reason, alert_type, risk_delta, co2_delta_abs):
-    """Simple confidence band for alert explainability."""
-    if alert_type == "positive":
-        if reason == "streak":
-            return "high"
-        if reason in ("improvement", "eco_win") and (risk_delta >= 1 or co2_delta_abs >= 40):
-            return "high"
-        return "medium"
-    if reason == "risk" and risk_delta >= 1:
-        return "high"
-    if reason == "co2" and co2_delta_abs >= 60:
-        return "high"
-    if reason in ("scene", "co2"):
-        return "medium"
-    return "low"
 
 
 def _alert_impact_score(alert_type, reason, risk, risk_delta, co2_delta_abs, counts):
@@ -553,17 +650,19 @@ def _build_savings_simulation(trip_summary):
     anticipation = float(style.get("anticipation_score", 0))
     efficiency = float(style.get("efficiency_score", 0))
 
-    # Conservative what-if multipliers.
-    smooth_gain = max(0, (80 - smooth) * 0.8)
-    anticipation_gain = max(0, (75 - anticipation) * 0.6)
-    efficiency_gain = max(0, (85 - efficiency) * 0.9)
-    blended_gain = smooth_gain + anticipation_gain + efficiency_gain
+    # Score-dependent what-if: the worse your current score, the more room to improve.
+    # A driver at 90 smoothness gets near-zero projection; one at 20 gets a big one.
+    smooth_factor = max(0, (90 - smooth) / 100) * 0.5
+    anticipation_factor = max(0, (85 - anticipation) / 100) * 0.4
+    efficiency_factor = max(0, (90 - efficiency) / 100) * 0.55
+
+    blended_gain = (smooth_factor + anticipation_factor + efficiency_factor) * annual_base
 
     return {
-        "if_smoothness_plus_10": round(annual_base * 0.35, 0),
-        "if_anticipation_plus_10": round(annual_base * 0.25, 0),
-        "if_efficiency_plus_10": round(annual_base * 0.40, 0),
-        "if_all_targets_hit": round(annual_base + blended_gain * 8, 0),
+        "if_smoothness_plus_10": round(annual_base * smooth_factor, 0),
+        "if_anticipation_plus_10": round(annual_base * anticipation_factor, 0),
+        "if_efficiency_plus_10": round(annual_base * efficiency_factor, 0),
+        "if_all_targets_hit": round(blended_gain, 0),
     }
 
 
@@ -723,7 +822,6 @@ def build_playback_alerts(results_list, fps, min_gap_sec=10.0):
         time_label = "%d:%02d" % (int(t) // 60, int(t) % 60)
         est_mph = _assumed_mph(chunk_counts)
         explanation = _alert_explanation(reason, alert_type)
-        confidence = _alert_confidence(reason, alert_type, abs(risk_delta), co2_delta_abs)
         impact_score = _alert_impact_score(alert_type, reason, risk, abs(risk_delta), co2_delta_abs, chunk_counts)
 
         alerts.append({
@@ -741,7 +839,6 @@ def build_playback_alerts(results_list, fps, min_gap_sec=10.0):
             "distance_tip": distance_tip if alert_type == "warning" else "",
             "reason": reason,
             "explanation": explanation,
-            "confidence": confidence,
             "impact_score": impact_score,
         })
     return alerts
@@ -834,7 +931,7 @@ def estimate_co2(counts, scene):
     }
 
 
-def build_trip_summary(results_list, fps):
+def build_trip_summary(results_list, fps, speed_est=None):
     """Build trip-level summary: total CO2, efficiency, green/red segments."""
     if not results_list or fps <= 0:
         return {}
@@ -932,12 +1029,22 @@ def build_trip_summary(results_list, fps):
     
     # Generate actionable insights based on all analytics
     insights = generate_actionable_insights(driving_style, fuel_consumption, co2_phases, trip_data)
-    
+
+    # Conditions detection (day/night/overcast)
+    conditions = aggregate_conditions(results_list, fps)
+
+    # Idle and hard braking stats from SpeedEstimator (if available)
+    idle_stats = speed_est.get_idle_stats(len(results_list)) if speed_est else {}
+    brake_stats = speed_est.get_brake_stats() if speed_est else {}
+
     return {
         **trip_data,
         "driving_style": driving_style,
         "fuel_consumption": fuel_consumption,
         "co2_phases": co2_phases,
+        "conditions": conditions,
+        "idle_stats": idle_stats,
+        "brake_stats": brake_stats,
         "actionable_insights": insights,
     }
 
@@ -985,7 +1092,7 @@ def analyze_driving_style(chunks, fps):
     total_chunks = len(chunks)
     
     # Calculate dimension scores (0-100)
-    smoothness_score = max(0, 100 - (risk_changes / total_chunks * 100) - (co2_spikes / total_chunks * 150))
+    smoothness_score = max(0, 100 - (risk_changes / total_chunks * 100) - (co2_spikes / total_chunks * 100))
     smoothness_score = min(100, round(smoothness_score))
     
     anticipation_score = round((low_risk_duration / total_chunks) * 100)
@@ -1061,15 +1168,16 @@ def calculate_fuel_consumption(avg_co2_gkm, distance_km, duration_sec):
     cost_usd = liters_used * cost_per_liter
     
     # Potential savings if driver improved to optimal (100 g/km)
+    # Skip for short clips (< 0.5 km) — extrapolation is meaningless
     optimal_co2 = 100  # g/km
-    if avg_co2_gkm > optimal_co2:
+    if avg_co2_gkm > optimal_co2 and distance_km >= 0.5:
         optimal_liters_per_km = optimal_co2 / 2310
         optimal_liters_used = distance_km * optimal_liters_per_km
         trip_savings = (liters_used - optimal_liters_used) * cost_per_liter
-        
+
         # Extrapolate to annual (assume 12,000 miles = 19,312 km/year)
         annual_km = 19312
-        trips_per_year = min(annual_km / distance_km, 600) if distance_km > 0 else 0  # cap to avoid huge numbers on short clips
+        trips_per_year = min(annual_km / distance_km, 600) if distance_km > 0 else 0
         potential_savings_year_usd = trip_savings * trips_per_year
     else:
         potential_savings_year_usd = 0
@@ -1358,7 +1466,7 @@ def main():
     if is_video and device == "cuda":
         # Batched inference keeps GPU busy (higher utilization, faster overall)
         print("Batched video inference (batch size from ECOROAD_BATCH_SIZE, default 32)")
-        results_list, latest, video_fps = _run_batched_video(model, source, predict_kw, run_name or "predict_batch", device)
+        results_list, latest, video_fps, speed_est_obj = _run_batched_video(model, source, predict_kw, run_name or "predict_batch", device)
         counts = aggregate_counts_from_frames(results_list)
         frames_processed = len(results_list)
     else:
@@ -1428,6 +1536,9 @@ def main():
     playback_alerts = []
     trip_summary = {}
     duration_sec = 0.0
+    # speed_est_obj is only set for batched GPU path; CPU path doesn't have one
+    if not is_video or device != "cuda":
+        speed_est_obj = None
     if is_video and results_list and frames_processed > 0:
         if video_fps is None:
             cap = cv2.VideoCapture(str(source))
@@ -1437,7 +1548,7 @@ def main():
             fps = video_fps
         duration_sec = round(frames_processed / fps, 2)
         playback_alerts = build_playback_alerts(results_list, fps)
-        trip_summary = build_trip_summary(results_list, fps)
+        trip_summary = build_trip_summary(results_list, fps, speed_est=speed_est_obj)
         if trip_summary:
             # Rank strongest moments first for quick review cards.
             ranked = sorted(playback_alerts, key=lambda a: a.get("impact_score", 0), reverse=True)

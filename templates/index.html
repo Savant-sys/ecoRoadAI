@@ -1421,7 +1421,7 @@
         {% if ts.get('co2_phases') %}
         {% set phases = ts.co2_phases %}
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ by Phase<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">How much of the trip was acceleration, cruising, braking, or idling — and average CO₂ (g/km) in each phase.</span></span></div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ by Phase (Est.)<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Estimated from scene type and CO₂ levels — not measured from vehicle sensors. Treat as approximate.</span></span></div>
           <div class="phase-breakdown">
             <div class="phase-item">
               <div class="phase-header">
@@ -1574,6 +1574,9 @@
             <span class="chip"><span class="unit-metric">{{ ts.avg_co2_gkm }} g/km avg</span><span class="unit-imperial">{{ (ts.avg_co2_gkm * 1.60934) | round(1) }} g/mi avg</span></span>
             <span class="chip"><span class="unit-metric">{{ ts.distance_est_km }} km</span><span class="unit-imperial">{{ "%.2f"|format(ts.distance_est_km * 0.621371) }} mi</span></span>
             {% if ts.efficiency_loss_pct > 0 %}<span class="chip chip-fuel">-{{ ts.efficiency_loss_pct }}% eff</span>{% endif %}
+            {% if ts.get('conditions') and ts.conditions.get('primary') %}<span class="chip">{{ ts.conditions.primary | capitalize }}</span>{% endif %}
+            {% if ts.get('idle_stats') and ts.idle_stats.get('total_idle_sec', 0) > 0 %}<span class="chip">{{ ts.idle_stats.total_idle_sec }}s idle ({{ ts.idle_stats.idle_pct }}%)</span>{% endif %}
+            {% if ts.get('brake_stats') and ts.brake_stats.get('hard_brake_count', 0) > 0 %}<span class="chip chip-fuel">{{ ts.brake_stats.hard_brake_count }} hard brake{{ 's' if ts.brake_stats.hard_brake_count != 1 }}</span>{% endif %}
           </div>
           <div class="risk-bar">
             {% if ts.green_pct > 0 %}<div data-pct="{{ ts.green_pct }}" style="background:var(--risk-low)"></div>{% endif %}
@@ -1716,7 +1719,6 @@
         if(a.co2_gkm){var c=document.createElement('span');c.className='chip chip-co2';c.textContent=a.co2_gkm+' g/km';row.appendChild(c);}
         if(a.fuel_penalty_pct>0){var f=document.createElement('span');f.className='chip chip-fuel';f.textContent='+'+a.fuel_penalty_pct+'%';row.appendChild(f);}
         if(a.est_mph){var m=document.createElement('span');m.className='chip';m.style.fontWeight='700';m.textContent='~'+a.est_mph+' mph';row.appendChild(m);}
-        if(a.confidence){var cf=document.createElement('span');cf.className='chip';cf.style.fontWeight='700';cf.textContent='Confidence: '+String(a.confidence).toUpperCase();row.appendChild(cf);}
         bEl.appendChild(row);
       }
       if(a.explanation){var ex=document.createElement('p');ex.style.cssText='font-size:12px;color:var(--text-3);margin-bottom:8px';ex.textContent=a.explanation;bEl.appendChild(ex);}

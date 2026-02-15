@@ -1,0 +1,199 @@
+========================================
+  EcoRoad AI - Calculations Guide
+  (Plain English)
+========================================
+
+
+1. HOW WE GUESS THE CAR'S SPEED
+--------------------------------
+We have TWO methods:
+
+  a) "Count stuff" method (_assumed_mph)
+     - Look at what the camera sees (cars, trucks, people, stop signs)
+     - Pick a base speed for the road type:
+         Highway = 65 mph
+         City street = 35 mph
+         Intersection = 25 mph
+         Neighborhood = 30 mph
+     - Subtract speed for each problem:
+         Extra cars nearby = -3 mph each
+         Trucks/buses = extra -3 to -4 mph each
+         Pedestrians = -5 to -10 mph
+         Stop signs/lights = -3 to -6 mph
+     - Cap the result so it stays realistic
+
+  b) "Pixel motion" method (SpeedEstimator / optical flow)
+     - Compare two video frames back to back
+     - Measure how much the road pixels moved
+     - More pixel movement = faster car
+     - Uses only the bottom 40% of the frame (the road part)
+     - Smooths the number over time so it doesn't jump around
+
+  KNOWN WEAKNESS: The pixel method uses one magic number (12.0) to
+  convert pixel movement to mph. This only works well for one type
+  of dashcam. Different cameras will be off. Also, a parked car with
+  slight camera shake will show ~3-4 mph instead of 0.
+
+
+2. HOW WE ESTIMATE CO2 EMISSIONS
+----------------------------------
+  - Start with 120 g/km (average car at steady speed)
+  - Adjust based on road type:
+      Highway:       -10%  (efficient cruising)
+      Neighborhood:  +10%  (slow = slightly wasteful)
+      Intersection:  +30%  (stopping and starting)
+      City street:   +60 to 75%  (stop-and-go = bad)
+  - Extra +15% if there are people AND heavy traffic
+    (more idling while waiting for pedestrians)
+
+  THESE NUMBERS ARE SOLID - they match real-world EPA/EU data.
+
+
+3. HOW WE CONVERT CO2 TO FUEL & MONEY
+---------------------------------------
+  - 1 liter of gas produces 2,310 grams of CO2 (EPA fact)
+  - So: liters used = (CO2 per km * distance) / 2310
+  - MPG = 235.214 / (liters per 100 km)   <-- standard conversion
+  - Cost = liters * $0.92/liter (~$3.50/gallon US average)
+
+  ALL CORRECT - textbook conversions.
+
+
+4. HOW WE CALCULATE STOPPING DISTANCE
+---------------------------------------
+  Formula: distance = (speed * 1.5 sec) + (speed^2 / 12)
+
+  First part  = how far you travel while your brain reacts (1.5 seconds)
+  Second part = how far you skid while braking (deceleration = 6 m/s^2)
+
+  Example at 40 mph (~18 m/s):
+    Reaction: 18 * 1.5 = 27 meters
+    Braking:  18^2 / 12 = 27 meters
+    Total:    54 meters (~12 car lengths)
+
+  THIS IS CORRECT physics.
+
+
+5. HOW WE SCORE DRIVING STYLE
+-------------------------------
+  Three scores, each 0-100:
+
+  Smoothness  = how often the risk level changes between chunks
+                (lots of changes = jerky driving = low score)
+
+  Anticipation = % of time spent in "low risk" situations
+                 (more low-risk time = better at reading the road)
+
+  Efficiency  = % of time NOT in high-CO2 zones
+                (less time in heavy traffic = better score)
+
+  Combined into a label:
+    80+ avg = "Expert Eco-Driver"
+    65-79   = "Efficient Commuter"
+    50-64   = "Average Driver"
+    35-49   = "Reactive Driver"
+    <35     = "Aggressive Pattern"
+
+
+6. HOW ALERTS WORK
+--------------------
+  Every 3 seconds of video, we check:
+    - Did the risk level jump up? --> WARNING
+    - Did the scene change while risk is medium/high? --> WARNING
+    - Did CO2 spike by 50+ g/km? --> WARNING
+    - Did risk drop down? --> POSITIVE alert
+    - Been low-risk for 30+ seconds? --> POSITIVE alert (streak)
+    - Did CO2 drop by 40+ g/km? --> POSITIVE alert
+
+  Minimum 10 seconds between warnings (no alert spam).
+  Each alert gets an impact score (0-100) for ranking.
+
+
+========================================
+  WHAT TO IMPROVE
+========================================
+
+FIX THESE (bugs / misleading results):
+---------------------------------------
+
+1. PHANTOM SPEED WHEN STOPPED
+   The optical flow speed estimator never hits true 0 mph.
+   Camera vibration shows as ~3-4 mph even when parked.
+   Fix: if pixel motion < 0.3, force speed to 0.
+
+2. SAVINGS PROJECTION ON SHORT CLIPS
+   A 5-second clip gets extrapolated to annual savings.
+   distance_km might be 0.02 km, and 600 trips * tiny savings
+   still produces fake-looking dollar amounts.
+   Fix: skip savings estimate if total distance < 0.5 km.
+
+3. SAVINGS SIMULATOR IGNORES CURRENT SCORE
+   "If smoothness +10" always shows 35% of annual base savings,
+   whether the driver scores 20 or 90 on smoothness.
+   Fix: scale the what-if by how far the driver is from the target.
+
+4. SMOOTHNESS SCORING IS HARSH ON CO2 SPIKES
+   The CO2 spike multiplier (150) is 50% stronger than the
+   risk-change multiplier (100). A few spikes tank the score.
+   Fix: bring both multipliers closer together (e.g., both 100).
+
+
+CONSIDER REMOVING (unnecessary complexity):
+--------------------------------------------
+
+1. CO2 PHASE BREAKDOWN (analyze_co2_phases)
+   It guesses "acceleration vs cruising vs braking vs idling" from
+   scene type and CO2 levels. Without real speed/accelerometer data,
+   these labels are mostly made up. A highway chunk with CO2 < 120
+   gets called "cruising" but it could be coasting downhill or braking.
+   --> Either remove it or clearly label it as "estimated phases"
+       so users don't think it's measured.
+
+2. SAVINGS SIMULATION (build_savings_simulation)
+   The fixed-fraction what-ifs (35%, 25%, 40%) don't actually
+   connect to the driving data. It's just marketing math.
+   --> Remove or rework with score-dependent logic.
+
+3. ALERT CONFIDENCE FIELD
+   "high" / "medium" / "low" confidence doesn't add much value
+   for the user. It's not shown prominently and the logic is simple.
+   --> Could remove to simplify the alert object.
+
+
+CONSIDER ADDING:
+-----------------
+
+1. IDLE DETECTION
+   If optical flow speed is near 0 for 5+ seconds, flag it as
+   "idling." This is cheap to compute and gives a real measured
+   metric instead of guessing from scene type.
+
+2. HARD BRAKING / ACCELERATION EVENTS
+   Track frame-to-frame speed changes from optical flow.
+   If speed drops 10+ mph in 1-2 seconds = hard brake event.
+   Count these per trip. Real driving apps (like Progressive Snapshot)
+   use this as their #1 metric.
+
+3. DISTANCE FROM REAL GPS (optional)
+   If the user can provide a GPX file alongside the video,
+   use real distance/speed instead of estimates. Would make all
+   the CO2 and fuel numbers actually accurate instead of guessed.
+
+4. NIGHT / WEATHER DETECTION
+   Frame brightness and contrast could flag night driving or rain.
+   These conditions change risk and emissions significantly.
+   Easy win with just average pixel brightness thresholds.
+
+
+========================================
+  BOTTOM LINE
+========================================
+
+The core math (CO2, fuel, stopping distance) is solid.
+The weak spots are all in the ESTIMATION layer -- guessing
+speed, guessing driving phase, guessing annual savings.
+That's expected when your only input is a camera feed.
+
+Priority fixes:  #1 phantom speed, #2 short clip guard
+Priority adds:   #1 idle detection, #2 hard braking events
+Priority cuts:   #1 CO2 phases (misleading), #2 savings sim
