@@ -103,74 +103,85 @@
       position: absolute;
       left: 0;
       right: 0;
-      top: -100%;
-      bottom: -100%;
-      width: 100%;
+      top: -20%;
+      height: 140%;
       background-image: repeating-linear-gradient(
-        90deg,
+        0deg,
         transparent 0,
-        transparent 12px,
-        rgba(34, 197, 94, 0.12) 12px,
-        rgba(34, 197, 94, 0.12) 14px
+        transparent 44px,
+        rgba(34, 197, 94, 0.1) 44px,
+        rgba(34, 197, 94, 0.1) 48px
       );
-      background-size: 26px 80px;
-      animation: roadMove 20s linear infinite;
-      mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.4) 15%, rgba(0,0,0,.5) 50%, rgba(0,0,0,.4) 85%, transparent 100%);
+      background-size: 100% 80px;
+      animation: roadMoveV 18s linear infinite;
+      mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.35) 15%, rgba(0,0,0,.5) 50%, rgba(0,0,0,.35) 85%, transparent 100%);
     }
     .road-lines:nth-child(3) {
-      left: 25%;
-      width: 2px;
-      background-image: none;
-      background: linear-gradient(to bottom, transparent, rgba(34,197,94,.08) 20%, rgba(34,197,94,.08) 80%, transparent);
-      background-size: 100% 80px;
       animation-duration: 14s;
       animation-direction: reverse;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 44px,
+        rgba(6, 182, 212, 0.07) 44px,
+        rgba(6, 182, 212, 0.07) 48px
+      );
     }
     .road-lines:nth-child(4) {
-      left: 75%;
-      width: 2px;
-      background-image: none;
-      background: linear-gradient(to bottom, transparent, rgba(6,182,212,.06) 20%, rgba(6,182,212,.06) 80%, transparent);
-      background-size: 100% 80px;
-      animation-duration: 18s;
+      animation-duration: 22s;
+      animation-delay: -7s;
     }
-    @keyframes roadMove {
+    @keyframes roadMoveV {
       0% { transform: translateY(0); }
       100% { transform: translateY(80px); }
     }
     .car-dot {
       position: absolute;
-      width: 8px;
-      height: 14px;
-      border-radius: 3px 3px 6px 6px;
-      background: linear-gradient(180deg, rgba(34,197,94,.35), rgba(34,197,94,.15));
-      box-shadow: 0 0 12px rgba(34,197,94,.2);
-      animation: carDrift 25s linear infinite;
+      width: 10px;
+      height: 16px;
+      border-radius: 4px 4px 6px 6px;
+      background: linear-gradient(180deg, rgba(34,197,94,.4), rgba(34,197,94,.18));
+      box-shadow: 0 0 14px rgba(34,197,94,.25);
+      animation: carDriftR 20s linear infinite;
+      top: 20%;
     }
-    .car-dot:nth-child(6) { left: 18%; top: 20%; animation-delay: -5s; animation-duration: 28s; width: 6px; height: 11px; opacity: .7; }
-    .car-dot:nth-child(7) { left: 82%; top: 60%; animation-delay: -12s; animation-duration: 22s; background: linear-gradient(180deg, rgba(6,182,212,.3), rgba(6,182,212,.12)); box-shadow: 0 0 10px rgba(6,182,212,.18); }
-    @keyframes carDrift {
-      0% { transform: translateY(-20vh) translateX(0) scale(1); opacity: 0; }
-      5% { opacity: .6; }
-      95% { opacity: .5; }
-      100% { transform: translateY(120vh) translateX(10px) scale(1); opacity: 0; }
+    .car-dot.car-left {
+      animation-name: carDriftL;
+    }
+    .car-dot:nth-child(5) { top: 15%; animation-delay: 0s; animation-duration: 24s; }
+    .car-dot:nth-child(6) { top: 28%; animation-delay: -4s; animation-duration: 19s; width: 8px; height: 13px; opacity: .85; }
+    .car-dot:nth-child(7) { top: 42%; animation-delay: -8s; animation-duration: 26s; background: linear-gradient(180deg, rgba(6,182,212,.35), rgba(6,182,212,.15)); box-shadow: 0 0 12px rgba(6,182,212,.2); }
+    .car-dot:nth-child(8) { top: 55%; animation-delay: -2s; animation-duration: 22s; animation-name: carDriftL; width: 7px; height: 12px; opacity: .75; }
+    .car-dot:nth-child(9) { top: 68%; animation-delay: -11s; animation-duration: 28s; animation-name: carDriftL; }
+    .car-dot:nth-child(10) { top: 78%; animation-delay: -6s; animation-duration: 21s; background: linear-gradient(180deg, rgba(6,182,212,.3), rgba(6,182,212,.12)); }
+    .car-dot:nth-child(11) { top: 88%; animation-delay: -15s; animation-duration: 25s; animation-name: carDriftL; width: 8px; height: 14px; opacity: .8; }
+    @keyframes carDriftR {
+      0% { left: -5%; transform: translateX(0) scale(1); opacity: 0; }
+      8% { opacity: .7; }
+      92% { opacity: .65; }
+      100% { left: -5%; transform: translateX(110vw) scale(1); opacity: 0; }
+    }
+    @keyframes carDriftL {
+      0% { left: 105%; transform: translateX(0) scale(1); opacity: 0; }
+      8% { opacity: .7; }
+      92% { opacity: .65; }
+      100% { left: 105%; transform: translateX(-110vw) scale(1); opacity: 0; }
     }
     .road-glow {
       position: absolute;
-      left: 50%;
-      bottom: -50%;
-      width: 140%;
-      height: 120%;
-      transform: translateX(-50%) perspective(400px) rotateX(75deg);
+      left: 0;
+      right: 0;
+      top: -20%;
+      height: 140%;
       background: repeating-linear-gradient(
-        to bottom,
+        0deg,
         transparent 0,
-        transparent 60px,
-        rgba(34, 197, 94, 0.03) 60px,
-        rgba(34, 197, 94, 0.06) 62px
+        transparent 56px,
+        rgba(34, 197, 94, 0.04) 56px,
+        rgba(34, 197, 94, 0.08) 60px
       );
-      animation: roadMove 15s linear infinite;
-      mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,.25) 30%, transparent);
+      animation: roadMoveV 16s linear infinite;
+      mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,.2) 30%, rgba(0,0,0,.25) 70%, transparent);
     }
     @media (prefers-reduced-motion: reduce) {
       .road-lines, .road-glow { animation: none; }
@@ -774,6 +785,10 @@
     <div class="car-dot"></div>
     <div class="car-dot"></div>
     <div class="car-dot"></div>
+    <div class="car-dot car-left"></div>
+    <div class="car-dot car-left"></div>
+    <div class="car-dot"></div>
+    <div class="car-dot car-left"></div>
   </div>
   <div class="grid-bg" aria-hidden="true"></div>
 
