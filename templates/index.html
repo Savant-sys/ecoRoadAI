@@ -213,7 +213,7 @@
     body.has-results .road-glow { animation: none; }
     body.has-results .car-dot { animation: none; opacity: 0.5; }
     body > * { position: relative; z-index: 1; }
-    body { max-width: 1000px; margin: 0 auto; padding: 0 24px 56px; }
+    body { max-width: 1180px; margin: 0 auto; padding: 0 24px 56px; }
     .grid-bg { display: none; }
 
     .run-btn:focus-visible, .a-cta:focus-visible, .hero input[type=file]:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }
@@ -416,8 +416,12 @@
 
     .results { animation: revealUp 0.4s var(--ease) both; contain: layout style; }
     @keyframes revealUp { from { opacity: 0; transform: translateY(16px); } }
-    .grid-main { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
-    @media (max-width: 920px) { .grid-main { grid-template-columns: 1fr; } }
+    .grid-main {
+      display: flex; flex-direction: column; gap: 28px; align-items: stretch;
+    }
+    .grid-main .panel-media {
+      max-width: 880px; margin-left: auto; margin-right: auto; width: 100%;
+    }
     .panel {
       background: var(--card);
       border: 1px solid var(--border);
@@ -521,30 +525,41 @@
     .chip-fuel { background: var(--amber-soft); border-color: rgba(234, 179, 8, 0.35); color: var(--amber); }
 
     /* Metrics: eco score as hero */
-    .metrics { display: grid; grid-template-columns: auto 1fr 1fr; gap: 14px; margin-top: 12px; align-items: center; }
-    @media (max-width: 380px) { .metrics { grid-template-columns: 1fr 1fr; } .eco-ring { display: none; } }
+    .metrics {
+      display: grid; grid-template-columns: auto 1fr 1fr; gap: 18px; margin-top: 16px; align-items: stretch;
+      padding: 18px; border-radius: 14px; background: var(--bg-raised); border: 1px solid var(--border);
+    }
+    @media (max-width: 380px) { .metrics { grid-template-columns: 1fr 1fr; padding: 14px; } .eco-ring { display: none; } }
     .eco-ring {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: conic-gradient(var(--green) calc(var(--eco-pct, 0) * 1%), var(--bg-float) 0%);
-      padding: 4px; flex-shrink: 0;
-      border: 2px solid var(--border);
+      width: 80px; height: 80px; border-radius: 50%;
+      background: conic-gradient(var(--green) 0%, var(--green-bright) calc(var(--eco-pct, 0) * 0.5%), var(--green-bright) calc(var(--eco-pct, 0) * 1%), var(--bg-float) 0%);
+      padding: 6px; flex-shrink: 0;
+      border: 2px solid rgba(34,197,94,.35);
       position: relative;
       transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 24px rgba(34,197,94,.15);
     }
     .eco-ring:hover { border-color: var(--green); box-shadow: var(--glow-green-sm); }
     .eco-ring-inner {
-      width: 100%; height: 100%; border-radius: 50%; background: var(--card);
+      width: 100%; height: 100%; border-radius: 50%;
+      background: radial-gradient(ellipse 70% 70% at 50% 50%, var(--card) 0%, var(--bg-raised) 100%);
       display: grid; place-items: center;
-      font-size: 20px; font-weight: 700; color: var(--text);
+      font-size: 24px; font-weight: 800; color: var(--text); font-family: var(--font-head);
+      letter-spacing: -0.03em;
     }
     .mbox {
-      background: var(--bg-raised); border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px 14px; transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 18px; transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column; justify-content: center;
     }
-    .mbox:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
-    .mbox-k { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
-    .mbox-v { font-size: 18px; font-weight: 700; margin-top: 2px; color: var(--text); }
-    .mbox-sm { font-size: 12px; font-weight: 500; color: var(--text-3); }
+    .mbox:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(0,0,0,.25); }
+    .mbox.risk-low { border-left: 4px solid var(--green-bright); }
+    .mbox.risk-medium { border-left: 4px solid var(--amber); }
+    .mbox.risk-high { border-left: 4px solid var(--red); }
+    .metrics .mbox:last-child { border-left: 4px solid rgba(34,197,94,.5); }
+    .mbox-k { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+    .mbox-v { font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--text); font-family: var(--font-head); letter-spacing: -0.02em; }
+    .mbox-sm { font-size: 13px; font-weight: 500; color: var(--text-3); }
     .risk-high .mbox-v { color: var(--red); }
     .risk-medium .mbox-v { color: var(--amber); }
     .risk-low .mbox-v { color: var(--green-bright); }
