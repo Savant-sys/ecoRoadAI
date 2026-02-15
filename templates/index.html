@@ -99,6 +99,8 @@
       z-index: 0;
       pointer-events: none;
       overflow: hidden;
+      mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
     }
     .road-lines {
       position: absolute;
@@ -108,11 +110,11 @@
       height: 140%;
       background-image: repeating-linear-gradient(
         0deg,
-        transparent 0,
-        transparent 38px,
-        rgba(34, 197, 94, 0.08) 38px,
-        rgba(34, 197, 94, 0.11) 44px,
-        transparent 48px
+        transparent 0px,
+        transparent 52px,
+        rgba(34, 197, 94, 0.09) 52px,
+        rgba(34, 197, 94, 0.09) 58px,
+        transparent 58px
       );
       background-size: 100% 80px;
       animation: roadMoveV 18s linear infinite;
@@ -125,11 +127,11 @@
       animation-direction: reverse;
       background-image: repeating-linear-gradient(
         0deg,
-        transparent 0,
-        transparent 40px,
-        rgba(6, 182, 212, 0.05) 40px,
-        rgba(6, 182, 212, 0.08) 45px,
-        transparent 50px
+        transparent 0px,
+        transparent 54px,
+        rgba(6, 182, 212, 0.06) 54px,
+        rgba(6, 182, 212, 0.06) 60px,
+        transparent 60px
       );
     }
     .road-lines:nth-child(4) {
@@ -179,14 +181,14 @@
     .car-dot:nth-child(18) { top: 92%; animation-delay: -3s;  animation-duration: 22s; animation-name: carDriftL; width: 16px; height: 8px; opacity: .78; }
     @keyframes carDriftR {
       0% { left: -5%; transform: translateX(0) scale(1); opacity: 0; }
-      6% { opacity: .75; }
-      94% { opacity: .7; }
+      10% { opacity: .72; }
+      90% { opacity: .7; }
       100% { left: -5%; transform: translateX(110vw) scale(1); opacity: 0; }
     }
     @keyframes carDriftL {
       0% { left: 105%; transform: translateX(0) scale(1); opacity: 0; }
-      6% { opacity: .75; }
-      94% { opacity: .7; }
+      10% { opacity: .72; }
+      90% { opacity: .7; }
       100% { left: 105%; transform: translateX(-110vw) scale(1); opacity: 0; }
     }
     .road-glow {
@@ -197,12 +199,13 @@
       height: 140%;
       background: repeating-linear-gradient(
         0deg,
-        transparent 0,
-        transparent 48px,
-        rgba(34, 197, 94, 0.03) 48px,
-        rgba(34, 197, 94, 0.065) 54px,
-        transparent 60px
+        transparent 0px,
+        transparent 50px,
+        rgba(34, 197, 94, 0.045) 50px,
+        rgba(34, 197, 94, 0.045) 56px,
+        transparent 56px
       );
+      background-size: 100% 80px;
       animation: roadMoveV 16s linear infinite;
       mask-image:
         linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.18) 22%, rgba(0,0,0,.28) 78%, transparent 100%),
