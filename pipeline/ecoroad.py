@@ -907,7 +907,10 @@ def build_trip_summary(results_list, fps):
         ch = chunks[idx]
         t0 = ch["start_frame"] / fps
         t1 = ch["end_frame"] / fps
-        return "%d:%02d–%d:%02d" % (int(t0) // 60, int(t0) % 60, int(t1) // 60, int(t1) % 60)
+        # Use round so sub-1s chunks don't show as "0:00–0:00"; ensure end > start
+        s0 = round(t0)
+        s1 = max(s0 + 1, round(t1)) if t1 > t0 else s0 + 1
+        return "%d:%02d–%d:%02d" % (s0 // 60, s0 % 60, s1 // 60, s1 % 60)
 
     # Add comprehensive driving analytics
     driving_style = analyze_driving_style(chunks, fps)

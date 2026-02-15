@@ -1568,7 +1568,7 @@
 
         <!-- Original Trip Summary -->
         <div class="trip">
-          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Trip totals: CO₂, estimated distance, and % of time in low/medium/high risk. Best and worst moments with time ranges.</span></span></div>
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip<span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Trip totals: CO₂, distance (estimated from video, no GPS), and % of time in low/medium/high risk. Best and worst segments by CO₂. Short clips (e.g. 40s) often show 0.3–0.5 mi because speed is inferred from the scene.</span></span></div>
           <div class="trip-chips">
             <span class="chip chip-co2">{{ ts.total_co2_g }}g CO₂</span>
             <span class="chip"><span class="unit-metric">{{ ts.avg_co2_gkm }} g/km avg</span><span class="unit-imperial">{{ (ts.avg_co2_gkm * 1.60934) | round(1) }} g/mi avg</span></span>
