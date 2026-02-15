@@ -1463,9 +1463,10 @@ def main():
     predict_kw["exist_ok"] = True
 
     video_fps = None
-    if is_video and device == "cuda":
-        # Batched inference keeps GPU busy (higher utilization, faster overall)
-        print("Batched video inference (batch size from ECOROAD_BATCH_SIZE, default 32)")
+    if is_video:
+        # Batched path: draws speed (Farneback optical flow) on every frame; works on both CPU and CUDA
+        default_batch = "32" if device == "cuda" else "8"
+        print("Batched video inference (ECOROAD_BATCH_SIZE, default %s)" % default_batch)
         results_list, latest, video_fps, speed_est_obj = _run_batched_video(model, source, predict_kw, run_name or "predict_batch", device)
         counts = aggregate_counts_from_frames(results_list)
         frames_processed = len(results_list)
@@ -1536,8 +1537,8 @@ def main():
     playback_alerts = []
     trip_summary = {}
     duration_sec = 0.0
-    # speed_est_obj is only set for batched GPU path; CPU path doesn't have one
-    if not is_video or device != "cuda":
+    # speed_est_obj is set whenever we use batched video (CPU or CUDA)
+    if not is_video:
         speed_est_obj = None
     if is_video and results_list and frames_processed > 0:
         if video_fps is None:
