@@ -242,7 +242,7 @@ def _run_batched_video(model, source, predict_kw, run_name, device):
 
     cap.release()
     writer.release()
-    return results_list, out_dir
+    return results_list, out_dir, fps
 
 
 def summarize_detections(results):
@@ -362,7 +362,7 @@ class SpeedEstimator:
     def update(self, frame_bgr, counts=None):
         """Feed a BGR frame, return smoothed speed in mph."""
         h, w = frame_bgr.shape[:2]
-        small = cv2.resize(frame_bgr, (int(w * self._scale), int(h * self._scale)))
+        small = cv2.resize(frame_bgr, (int(w * self._scale), int(h * self._scale)), interpolation=cv2.INTER_AREA)
         gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
 
         # Use only bottom 40% of frame (road surface, most motion)
@@ -1351,10 +1351,11 @@ def main():
     predict_kw["name"] = run_name if run_name else "predict"
     predict_kw["exist_ok"] = True
 
+    video_fps = None
     if is_video and device == "cuda":
         # Batched inference keeps GPU busy (higher utilization, faster overall)
         print("Batched video inference (batch size from ECOROAD_BATCH_SIZE, default 32)")
-        results_list, latest = _run_batched_video(model, source, predict_kw, run_name or "predict_batch", device)
+        results_list, latest, video_fps = _run_batched_video(model, source, predict_kw, run_name or "predict_batch", device)
         counts = aggregate_counts_from_frames(results_list)
         frames_processed = len(results_list)
     else:
@@ -1425,9 +1426,12 @@ def main():
     trip_summary = {}
     duration_sec = 0.0
     if is_video and results_list and frames_processed > 0:
-        cap = cv2.VideoCapture(str(source))
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-        cap.release()
+        if video_fps is None:
+            cap = cv2.VideoCapture(str(source))
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            cap.release()
+        else:
+            fps = video_fps
         duration_sec = round(frames_processed / fps, 2)
         playback_alerts = build_playback_alerts(results_list, fps)
         trip_summary = build_trip_summary(results_list, fps)
