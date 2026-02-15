@@ -165,7 +165,8 @@ def register_routes(app):
             summary = json.loads((OUTPUT_DIR / "summary.json").read_text())
             annotated_filename = summary.get("annotated_media")
             _save_history_entry(output_id, orig_filename, summary)
-            history = _load_history()
+            # Redirect so the URL reflects this run and the browser loads the new video (avoids showing first video)
+            return redirect(url_for("index", output_id=output_id))
 
         cache_bust = int(time.time() * 1000) if summary else None
         orig_path, _ = get_original_path(output_id) if summary and output_id else (None, None)
