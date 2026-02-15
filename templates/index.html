@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EcoRoad AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg0: #06090a;
+      --bg1: #0a0f12;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.10);
+      --border2: rgba(255,255,255,.16);
+      --text: rgba(255,255,255,.92);
+      --text-2: rgba(255,255,255,.75);
+      --text-3: rgba(255,255,255,.55);
+      --text-4: rgba(255,255,255,.42);
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.18);
+      --green: #22c55e;
+      --green-bright: #4ade80;
+      --green-soft: rgba(34, 197, 94, 0.18);
+      --teal: #06b6d4;
+      --teal-soft: rgba(6, 182, 212, 0.15);
+      --amber: #eab308;
+      --amber-soft: rgba(234, 179, 8, 0.18);
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.18);
+      --risk-high: #ef4444;
+      --risk-medium: #eab308;
+      --risk-low: #22c55e;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --font-head: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --shadow: 0 20px 50px rgba(0,0,0,.45);
+      --shadow2: 0 12px 32px rgba(0,0,0,.35);
+      --glow-green: 0 0 28px rgba(34, 197, 94, 0.22);
+      --glow-green-sm: 0 0 14px rgba(34, 197, 94, 0.15);
+      --bg: var(--bg1);
+      --bg-card: var(--card);
+      --bg-raised: rgba(255,255,255,.05);
+      --bg-float: var(--card2);
+      --border-hi: var(--border2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background:
+        radial-gradient(1200px 700px at 15% 5%, rgba(34,197,94,.12), transparent 55%),
+        radial-gradient(900px 500px at 85% 15%, rgba(6,182,212,.10), transparent 50%),
+        radial-gradient(800px 600px at 70% 90%, rgba(34,197,94,.08), transparent 50%),
+        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(700px 400px at 90% 80%, rgba(34,197,94,.08), transparent 55%),
+        radial-gradient(600px 350px at 10% 70%, rgba(6,182,212,.06), transparent 55%);
+      animation: floatGlow 12s var(--ease) infinite alternate;
+      opacity: .9;
+    }
+    @keyframes floatGlow {
+      from { transform: translate(0,0) scale(1); }
+      to { transform: translate(0,-8px) scale(1.02); }
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      opacity: .04;
+      background-image:
+        linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(50% 40% at 50% 20%, #000 0%, transparent 75%);
+    }
+    body > * { position: relative; z-index: 1; }
+    body { max-width: 1000px; margin: 0 auto; padding: 0 24px 56px; }
+    .grid-bg { display: none; }
+
+    .run-btn:focus-visible, .a-cta:focus-visible, .hero input[type=file]:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }
+    .raw-toggle:focus-visible { outline: none; color: var(--accent); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; margin-bottom: 20px;
+      border-radius: var(--radius-xl);
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow2);
+      position: sticky;
+      top: 14px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+    .logo-mark {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(6,182,212,.7));
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 0 0 1px rgba(34,197,94,.2), var(--glow-green-sm);
+      display: grid; place-items: center;
+      font-family: var(--font-head); font-size: 20px; font-weight: 800; color: #06090a;
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    .logo-mark:hover { transform: scale(1.04); box-shadow: var(--glow-green); }
+    .brand h1 { font-family: var(--font-head); font-size: 20px; font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: -0.03em; }
+    .brand h1 b { color: var(--green-bright); font-weight: 700; }
+    .brand p { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .nav-pills { display: flex; gap: 8px; }
+    .pill {
+      font-size: 10px; font-weight: 700; padding: 7px 11px; border-radius: 999px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border); color: var(--text-2);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .pill:hover { color: var(--text); border-color: var(--border2); background: var(--card); }
+    .pill-torch { border-color: rgba(234,179,8,.25); }
+    .pill-yolo { border-color: rgba(139,92,246,.25); }
+    .pill-gpu { border-color: rgba(34,197,94,.3); color: var(--green-bright); }
+
+    .hero {
+      background:
+        radial-gradient(55% 70% at 20% 30%, rgba(34,197,94,.12), transparent 55%),
+        radial-gradient(50% 60% at 85% 50%, rgba(6,182,212,.08), transparent 50%),
+        var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 36px 32px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .hero::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--green) 25%, var(--teal) 50%, var(--green) 75%, transparent 100%);
+      opacity: .85;
+    }
+    .hero::after {
+      content: ''; position: absolute; inset: -2px; pointer-events: none;
+      background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,.08) 35%, transparent 65%);
+      transform: translateX(-120%); animation: sheen 8s var(--ease) infinite;
+      opacity: .5;
+    }
+    @keyframes sheen {
+      0% { transform: translateX(-120%); }
+      45% { transform: translateX(120%); }
+      100% { transform: translateX(120%); }
+    }
+    .hero-head {
+      font-family: var(--font-head); font-size: 30px; font-weight: 700;
+      color: var(--text); margin-bottom: 10px; line-height: 1.2; letter-spacing: -0.04em;
+    }
+    .hero-head .g {
+      background: linear-gradient(90deg, var(--green-bright), var(--teal));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero-tagline {
+      font-size: 15px; line-height: 1.6; color: var(--text-2);
+      margin-bottom: 24px; max-width: 520px;
+    }
+    .hero-grid {
+      display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;
+    }
+    @media (max-width: 720px) { .hero-grid { grid-template-columns: 1fr; } .hero { padding: 28px 20px; } .hero-head { font-size: 22px; } .run-btn { width: 100%; justify-content: center; } }
+    .hero-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-3); margin-bottom: 8px;
+    }
+    .hero-label::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: middle; }
+    .hero-hint { font-size: 12px; color: var(--text-4); margin-top: 8px; }
+    .upload-zone { position: relative; }
+    .upload-icon {
+      position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+      font-size: 28px; pointer-events: none; opacity: 0.4;
+    }
+    .upload-zone.has-file .upload-icon { opacity: 0.7; }
+    .hero input[type=file] {
+      width: 100%; font-size: 14px; color: var(--text);
+      padding: 16px 52px 16px 20px; border-radius: var(--radius);
+      border: 1px dashed var(--border2); background: rgba(0,0,0,.2);
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    .hero input[type=file]:hover { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.06); }
+    .hero input[type=file]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .hero input[type=file]::file-selector-button {
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      color: #06090a; border: none; padding: 8px 16px; border-radius: 10px;
+      font-size: 12px; font-weight: 700; cursor: pointer; margin-right: 12px;
+      font-family: var(--font-head);
+    }
+    .hero input[type=file]::file-selector-button:hover { filter: brightness(1.08); }
+    .run-btn {
+      padding: 14px 28px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(6,182,212,.8));
+      color: #06090a; font-size: 14px; font-weight: 800; cursor: pointer;
+      font-family: var(--font-head);
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), filter 0.2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: 0 16px 40px rgba(34,197,94,.2);
+    }
+    .run-btn:hover { transform: translateY(-2px); box-shadow: var(--glow-green); filter: brightness(1.02); }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+    .run-btn svg { vertical-align: -2px; margin-right: 8px; }
+
+    .load-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,9,10,.88);
+      backdrop-filter: blur(12px);
+      z-index: 3000; place-items: center;
+    }
+    .load-overlay.on { display: grid; }
+    .load-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 40px 32px;
+      max-width: 400px; width: 92%;
+      text-align: center;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .load-orb {
+      width: 56px; height: 56px; margin: 0 auto 20px; border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--green);
+      border-right-color: var(--teal);
+      display: grid; place-items: center; position: relative;
+      animation: orbSpin 0.9s linear infinite;
+      box-shadow: 0 0 24px rgba(34,197,94,.18);
+    }
+    @keyframes orbSpin { to { transform: rotate(360deg); } }
+    .load-orb-inner { font-size: 20px; font-weight: 700; color: var(--accent); position: relative; z-index: 1; }
+    .load-h { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+    .load-p { font-size: 14px; color: var(--text-2); margin-bottom: 24px; }
+    .load-steps { text-align: left; }
+    .l-step {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 0; font-size: 14px; color: var(--text-3);
+      border-bottom: 1px solid var(--border);
+      transition: color 0.25s var(--ease);
+    }
+    .l-step:last-child { border-bottom: none; }
+    .l-step.now { color: var(--text); font-weight: 600; }
+    .l-step.ok { color: var(--green-bright); }
+    .l-num {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: grid; place-items: center; font-size: 12px; font-weight: 800;
+      background: var(--bg-raised); border: 1px solid var(--border);
+      transition: all 0.3s var(--ease); flex-shrink: 0;
+    }
+    .l-step.now .l-num { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .l-step.ok .l-num { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+    .l-txt { flex: 1; font-weight: 500; }
+    .l-spin {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite; display: none; flex-shrink: 0;
+    }
+    .l-step.now .l-spin { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .load-track { width: 100%; height: 6px; border-radius: 4px; background: var(--bg-raised); margin-top: 24px; overflow: hidden; }
+    .load-fill {
+      height: 100%; border-radius: 4px; width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--teal));
+      box-shadow: 0 0 16px rgba(34,197,94,.2);
+      transition: width 0.85s var(--ease);
+    }
+    .load-time { margin-top: 10px; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    .results { animation: revealUp 0.4s var(--ease) both; }
+    @keyframes revealUp { from { opacity: 0; transform: translateY(16px); } }
+    .grid-main { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+    @media (max-width: 920px) { .grid-main { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(14px);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .panel:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+    .panel-media { border-left: 4px solid var(--green); }
+    .panel-analysis { border-left: 4px solid var(--accent); }
+    .section-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-3); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(34,197,94,.45); }
+    .section-label .badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; background: var(--bg-float); color: var(--text-2); font-weight: 600; margin-left: 6px; border: 1px solid var(--border); }
+
+    video, .out-img {
+      width: 100%; border-radius: var(--radius); border: 1px solid var(--border); display: block;
+      background: var(--bg-raised);
+      transition: box-shadow 0.2s;
+    }
+    video:focus, .out-img:focus { outline: none; box-shadow: 0 0 0 2px var(--accent); }
+    .media-wrap:hover video, .media-wrap:hover .out-img { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .media-wrap { position: relative; border-radius: var(--radius); overflow: hidden; }
+    .media-badge {
+      position: absolute; top: 10px; left: 10px; z-index: 2;
+      font-size: 10px; font-weight: 600;
+      padding: 6px 11px; border-radius: 8px;
+      background: rgba(6,9,10,.85); border: 1px solid var(--border);
+      color: var(--text-2);
+      backdrop-filter: blur(8px);
+    }
+    .media-info {
+      margin-top: 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      font-size: 12px; color: var(--text-4);
+    }
+    .media-info a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .media-info a:hover { text-decoration: underline; }
+
+    .alert-timeline { margin-top: 10px; }
+    .alert-timeline .tl-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-4); margin-bottom: 6px; }
+    .alert-timeline-bar {
+      position: relative; height: 32px; background: var(--bg-raised); border: 1px solid var(--border);
+      border-radius: var(--radius); width: 100%; overflow: visible;
+    }
+    .alert-marker {
+      position: absolute; top: 50%; transform: translate(-50%, -50%);
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #0f1210; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 2; border: 2px solid var(--bg-card);
+      transition: transform 0.2s var(--ease), box-shadow 0.2s;
+    }
+    .alert-marker:hover { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 0 12px rgba(34, 197, 94, 0.5); }
+    .alert-marker.risk-high { color: #fff; }
+    .alert-marker.risk-high:hover { box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+    .alert-marker.risk-medium { color: #0f1210; }
+    .alert-marker.risk-medium:hover { box-shadow: 0 0 12px rgba(234, 179, 8, 0.5); }
+    .alert-marker.risk-high { background: var(--risk-high); }
+    .alert-marker.risk-medium { background: var(--risk-medium); }
+    .alert-marker.risk-low { background: var(--risk-low); color: #0f1210; }
+    .alert-marker.positive { background: var(--green); color: #0f1210; }
+
+    .stages { display: flex; flex-direction: column; gap: 10px; }
+    .stage {
+      background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px;
+      border-left: 4px solid var(--border);
+      animation: stageIn 0.4s var(--ease) both;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .stage:hover { background: var(--bg-float); border-color: var(--border-hi); }
+    .stage:nth-child(1) { animation-delay: 0.05s; border-left-color: var(--accent); }
+    .stage:nth-child(2) { animation-delay: 0.1s; border-left-color: var(--green); }
+    .stage:nth-child(3) { animation-delay: 0.15s; border-left-color: var(--amber); }
+    .stage:nth-child(4) { animation-delay: 0.2s; border-left-color: var(--green); }
+    .stage:nth-child(5) { animation-delay: 0.25s; border-left-color: var(--amber); }
+    @keyframes stageIn { from { opacity: 0; transform: translateY(8px); } }
+    .stage.fade-in { opacity: 0; transform: translateY(12px); animation: none; }
+    .stage.fade-in.visible { opacity: 1; transform: translateY(0); }
+    .stage-head {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-3); margin-bottom: 8px;
+    }
+    .stage-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 6px;
+      background: var(--bg-float); border: 1px solid var(--border);
+      font-size: 11px; font-weight: 600; white-space: nowrap; color: var(--text-2);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .chip:hover { border-color: var(--border-hi); }
+    .chip .ci { font-size: 11px; }
+    .chip-scene { background: var(--accent-soft); border-color: rgba(34, 197, 94, 0.35); color: var(--green-bright); }
+    .chip-co2 { background: var(--green-soft); border-color: rgba(34, 197, 94, 0.35); color: var(--green-bright); }
+    .chip-fuel { background: var(--amber-soft); border-color: rgba(234, 179, 8, 0.35); color: var(--amber); }
+
+    /* Metrics: eco score as hero */
+    .metrics { display: grid; grid-template-columns: auto 1fr 1fr; gap: 14px; margin-top: 12px; align-items: center; }
+    @media (max-width: 380px) { .metrics { grid-template-columns: 1fr 1fr; } .eco-ring { display: none; } }
+    .eco-ring {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: conic-gradient(var(--green) calc(var(--eco-pct, 0) * 1%), var(--bg-float) 0%);
+      padding: 4px; flex-shrink: 0;
+      border: 2px solid var(--border);
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .eco-ring:hover { border-color: var(--green); box-shadow: var(--glow-green-sm); }
+    .eco-ring-inner {
+      width: 100%; height: 100%; border-radius: 50%; background: var(--bg-card);
+      display: grid; place-items: center;
+      font-size: 20px; font-weight: 700; color: var(--text);
+    }
+    .mbox {
+      background: rgba(0,0,0,.2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .mbox:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    .mbox-k { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
+    .mbox-v { font-size: 18px; font-weight: 700; margin-top: 2px; color: var(--text); }
+    .mbox-sm { font-size: 12px; font-weight: 500; color: var(--text-3); }
+    .risk-high .mbox-v { color: var(--red); }
+    .risk-medium .mbox-v { color: var(--amber); }
+    .risk-low .mbox-v { color: var(--green-bright); }
+
+    .co2-line { margin-top: 10px; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+    .co2-line .mbox-k { display: block; margin-bottom: 4px; }
+    .co2-val { font-size: 14px; font-weight: 600; color: var(--text-2); }
+
+    .compare-note {
+      margin-top: 10px; font-size: 13px; color: var(--text-3); font-weight: 500;
+      padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      line-height: 1.5;
+    }
+    .focus-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .focus-tag {
+      padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      background: var(--accent-soft); border: 1px solid rgba(22, 101, 52, 0.3); color: var(--accent);
+    }
+    .focus-tag:hover { background: rgba(22, 101, 52, 0.15); }
+    .assess {
+      margin-top: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.55;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text-2); font-weight: 500;
+    }
+    .tips-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .tips-list li {
+      font-size: 14px; color: var(--text-2); line-height: 1.6;
+      padding: 14px 16px; font-weight: 500;
+      display: flex; gap: 12px; align-items: flex-start;
+      background: rgba(0,0,0,.2); border: 1px solid var(--border); border-radius: 12px;
+      border-left: 3px solid var(--green);
+      transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s var(--ease);
+    }
+    .tips-list li:hover { color: var(--text); border-color: rgba(6,182,212,.25); background: var(--teal-soft); transform: translateX(4px); }
+    .tips-list li::before {
+      content: '💡'; flex-shrink: 0; font-size: 18px; margin-top: 1px;
+      filter: grayscale(0.3);
+    }
+    .tips-list li:nth-child(1)::before { content: '🎯'; }
+    .tips-list li:nth-child(2)::before { content: '⚡'; }
+    .tips-list li:nth-child(3)::before { content: '🌱'; }
+    .tips-list li:nth-child(4)::before { content: '🚗'; }
+    .tips-list li:nth-child(5)::before { content: '📊'; }
+
+    /* Trip: mini dashboard */
+    .trip {
+      background: linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-float) 100%);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; margin-top: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    .trip-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .risk-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); }
+    .risk-bar > div { min-width: 2px; }
+    .risk-legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-4); font-weight: 600; margin-top: 8px; flex-wrap: wrap; }
+    .risk-legend span { display: flex; align-items: center; gap: 4px; }
+    .rdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .segs { display: flex; gap: 18px; margin-top: 10px; font-size: 12px; color: var(--text-4); font-weight: 500; }
+    .segs strong { font-weight: 800; }
+
+    /* Driving Style */
+    .style-classification { margin-bottom: 14px; }
+    .style-badge {
+      display: inline-block; padding: 8px 14px; border-radius: var(--radius);
+      background: var(--green-soft); border: 1px solid var(--green);
+      font-size: 14px; font-weight: 600; color: var(--green);
+      margin-bottom: 8px;
+    }
+    .style-traits { display: flex; flex-wrap: wrap; gap: 6px; }
+    .trait-tag {
+      padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      background: var(--bg); border: 1px solid var(--border); color: var(--text-2);
+    }
+    .dimension-scores { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .dim-score { display: grid; grid-template-columns: 90px 1fr auto; gap: 10px; align-items: center; }
+    .dim-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .dim-bar-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; height: 20px; overflow: hidden; }
+    .dim-bar { height: 100%; transition: width 0.8s var(--ease-out); border-radius: 6px; }
+    .dim-val { font-size: 14px; font-weight: 700; color: var(--text); min-width: 32px; text-align: right; }
+
+    /* Fuel Grid */
+    .fuel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+    .fuel-metric {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px; display: flex; gap: 10px; align-items: center;
+      transition: all 0.2s var(--ease);
+    }
+    .fuel-metric:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+    .fuel-icon { font-size: 24px; flex-shrink: 0; }
+    .fuel-data { flex: 1; }
+    .fuel-value { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .fuel-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-top: 2px; }
+    .savings-callout {
+      margin-top: 12px; padding: 12px 14px; background: var(--green-soft); border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 10px; font-size: 13px; color: var(--green-bright); font-weight: 600; line-height: 1.5;
+    }
+
+    /* CO2 Phase Breakdown */
+    .phase-breakdown { display: flex; flex-direction: column; gap: 8px; }
+    .phase-item {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;
+      transition: all 0.2s var(--ease);
+    }
+    .phase-item:hover { border-color: var(--border-hi); background: var(--bg-raised); }
+    .phase-header { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .phase-name { font-size: 13px; font-weight: 600; color: var(--text-2); }
+    .phase-pct { font-size: 12px; font-weight: 700; color: var(--text-3); }
+    .phase-co2 { font-size: 14px; font-weight: 700; color: var(--text); }
+
+    /* Actionable Insights */
+    .insights-list { display: flex; flex-direction: column; gap: 10px; }
+    .insight-card {
+      background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--green-bright);
+      border-radius: 10px; padding: 14px 16px;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s var(--ease);
+    }
+    .insight-card:hover { border-color: var(--green); background: var(--bg-raised); transform: translateX(4px); }
+    .insight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .insight-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--green-bright); }
+    .insight-difficulty {
+      font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 5px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .difficulty-easy { background: var(--green-soft); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+    .difficulty-medium { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+    .difficulty-hard { background: var(--red-soft); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .insight-issue { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
+    .insight-rec { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 6px; }
+    .insight-impact { font-size: 12px; color: var(--green-bright); font-weight: 700; }
+
+    /* Trend + targets + simulator */
+    .top-alerts { display: flex; flex-direction: column; gap: 8px; }
+    .top-alert-item {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+    }
+    .top-alert-rank {
+      width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 11px; font-weight: 700; color: #fff; background: var(--accent);
+    }
+    .top-alert-rank.warning { background: var(--red); }
+    .top-alert-rank.positive { background: var(--green); }
+    .top-alert-text { font-size: 12px; color: var(--text-2); }
+    .top-alert-score { font-size: 11px; font-weight: 700; color: var(--text-3); }
+
+    .trend-grid { display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 10px; }
+    .trend-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    }
+    .trend-k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-4); font-weight: 700; }
+    .trend-v { margin-top: 3px; font-size: 14px; font-weight: 700; color: var(--text); }
+    .trend-delta { font-size: 11px; margin-top: 2px; font-weight: 700; }
+    .trend-delta.up { color: var(--green-bright); }
+    .trend-delta.down { color: var(--red); }
+
+    .targets-list { display: flex; flex-direction: column; gap: 8px; }
+    .target-item {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    }
+    .target-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .target-meta { margin-top: 4px; font-size: 12px; color: var(--text-2); }
+    .target-gap { font-size: 11px; font-weight: 700; color: var(--amber); }
+
+    .sim-grid { display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 10px; }
+    .sim-card {
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-raised) 100%);
+      border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    }
+    .sim-k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-4); font-weight: 700; }
+    .sim-v { margin-top: 3px; font-size: 15px; font-weight: 700; color: var(--green); }
+
+    /* Raw */
+    .raw-toggle {
+      font-size: 12px; color: var(--text-3); cursor: pointer; font-weight: 600;
+      padding: 8px 0; display: flex; align-items: center; gap: 6px; margin-top: 12px;
+      border: none; background: none;
+      transition: color 0.2s;
+    }
+    .raw-toggle:hover { color: var(--text-2); }
+    .raw-content { display: none; margin-top: 10px; overflow: hidden; }
+    .raw-content.open { display: block; }
+    pre {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; overflow: auto; font-size: 11px; color: var(--text-3); line-height: 1.6;
+      font-family: ui-monospace, 'Cascadia Code', 'SF Mono', monospace;
+    }
+
+    /* Footer */
+    .foot {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-3); font-weight: 500;
+      animation: revealUp 0.5s var(--ease-out) 0.2s both;
+    }
+    .foot a { color: var(--accent); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+    .foot a:hover { text-decoration: underline; }
+    .foot code { font-size: 11px; color: var(--text-3); background: var(--bg-raised); padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border); }
+
+    .alert-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,9,10,.9);
+      backdrop-filter: blur(12px);
+      z-index: 1500; place-items: center; padding: 20px;
+    }
+    .alert-overlay.visible { display: grid; }
+    .alert-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl); max-width: 440px; width: 100%;
+      padding: 24px 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .alert-box.risk-high { border-left: 4px solid var(--red); }
+    .alert-box.risk-medium { border-left: 4px solid var(--amber); }
+    .alert-box.positive { border-left: 4px solid var(--green); }
+    .alert-box h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .alert-box.risk-high h2 { color: var(--red); }
+    .alert-box.risk-medium h2 { color: var(--amber); }
+    .alert-box.positive h2 { color: var(--green-bright); }
+    .alert-icon { font-size: 24px; flex-shrink: 0; }
+    .alert-box .a-body { font-size: 15px; line-height: 1.6; color: var(--text-2); margin-bottom: 20px; }
+    .alert-box .a-body .driver-msg { margin-bottom: 8px; color: var(--text); font-weight: 600; }
+    .alert-box .a-body .distance-tip { margin-top: 10px; padding: 10px 14px; background: var(--bg-raised); border-radius: 10px; font-size: 13px; color: var(--text-2); border: 1px solid var(--border); }
+    .a-cta {
+      display: block; width: 100%; padding: 12px; border-radius: var(--radius); border: none;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      color: #06090a; font-size: 14px; font-weight: 700;
+      font-family: var(--font-head);
+      cursor: pointer; transition: opacity 0.2s, filter 0.2s;
+    }
+    .a-cta:hover { opacity: 0.95; filter: brightness(1.05); }
+    .a-disc { margin-top: 8px; font-size: 11px; color: var(--text-4); }
+    .a-time { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+      background: var(--green);
+      color: #0f1210; padding: 12px 20px; border-radius: var(--radius);
+      font-size: 14px; font-weight: 600; display: flex; align-items: center;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      box-shadow: var(--glow-green);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 600px) { .toast { bottom: 16px; right: 16px; left: 16px; } }
+
+    @media (max-width: 920px) {
+      body { padding: 0 24px 48px; }
+      .hero { padding: 40px 28px; }
+      .hero-head { font-size: 30px; }
+      .panel { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-left">
+      <div class="logo-mark">E</div>
+      <div class="brand">
+        <h1>Eco<b>Road</b> AI</h1>
+        <p>Sustainable driving intelligence &middot; SF Hacks 2026</p>
+      </div>
+    </div>
+    <div class="nav-pills">
+      <span class="pill pill-torch">PyTorch</span>
+      <span class="pill pill-yolo">YOLOv8</span>
+      <span class="pill pill-gpu">CUDA</span>
+    </div>
+  </nav>
+
+  <!-- HERO UPLOAD -->
+  <div class="hero">
+    <h2 class="hero-head">Drive smarter. <span class="g">Drive greener.</span></h2>
+    <p class="hero-tagline">Drop a dashcam image or video — we’ll analyze risk, CO₂ impact, and surface time-synced coaching alerts so you can improve every trip.</p>
+    <form id="upload-form" method="POST" enctype="multipart/form-data">
+      <div class="hero-label">Upload media</div>
+      <div class="hero-grid">
+        <div>
+          <div class="upload-zone">
+            <input id="file-input" type="file" name="image" accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" required>
+            <div class="upload-icon" id="upload-icon">📹</div>
+          </div>
+          <p class="hero-hint">Image or short dashcam clip (MP4, MOV, WebM)</p>
+        </div>
+        <button type="submit" class="run-btn" id="run-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run Analysis
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- LOADING -->
+  <div class="load-overlay" id="load-overlay">
+    <div class="load-card">
+      <div class="load-orb"><div class="load-orb-inner">E</div></div>
+      <div class="load-h" id="load-h">Analyzing...</div>
+      <div class="load-p" id="load-p">Running perception pipeline</div>
+      <div class="load-steps">
+        <div class="l-step" id="ls-1"><div class="l-num">1</div><div class="l-txt">Uploading file</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-2"><div class="l-num">2</div><div class="l-txt">YOLO object detection</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-3"><div class="l-num">3</div><div class="l-txt">Scene classification & CO2</div><div class="l-spin"></div></div>
+        <div class="l-step" id="ls-4"><div class="l-num">4</div><div class="l-txt">Rendering output</div><div class="l-spin"></div></div>
+      </div>
+      <div class="load-track"><div class="load-fill" id="load-fill"></div></div>
+      <div class="load-time" id="load-time">0s</div>
+    </div>
+  </div>
+
+  <script>
+  // File input enhancement
+  (function(){
+    var fileInput=document.getElementById('file-input'),icon=document.getElementById('upload-icon'),zone=document.querySelector('.upload-zone');
+    if(fileInput&&icon&&zone){
+      fileInput.addEventListener('change',function(){
+        if(this.files&&this.files[0]){
+          zone.classList.add('has-file');
+          icon.textContent='✅';
+        } else {
+          zone.classList.remove('has-file');
+          icon.textContent='📹';
+        }
+      });
+    }
+  })();
+  </script>
+  <script>
+  (function(){
+    var form=document.getElementById('upload-form'), btn=document.getElementById('run-btn'),
+        ov=document.getElementById('load-overlay'), fill=document.getElementById('load-fill'),
+        tEl=document.getElementById('load-time'), fIn=document.getElementById('file-input'),
+        hEl=document.getElementById('load-h'), pEl=document.getElementById('load-p'),
+        ids=['ls-1','ls-2','ls-3','ls-4'];
+    function setS(n){
+      for(var i=0;i<ids.length;i++){
+        var e=document.getElementById(ids[i]),d=e.querySelector('.l-num');
+        e.className='l-step'+(i<n?' ok':(i===n?' now':''));
+        if(i<n)d.textContent='\u2713';
+      }
+    }
+    form.addEventListener('submit',function(){
+      var f=fIn.files[0]; if(!f)return;
+      var isV=f.type.startsWith('video')||/\.(mp4|mov|avi|webm|mkv)$/i.test(f.name);
+      hEl.textContent=isV?'Analyzing video...':'Analyzing image...';
+      pEl.textContent=isV?'Processing frames through perception pipeline':'Running AI detection';
+      btn.disabled=true; btn.textContent='Processing...';
+      ov.classList.add('on');
+      var t0=Date.now(), ts=isV?[1200,7000,13000,17000]:[600,2000,3500,5000], cur=0;
+      setS(0); fill.style.width='4%';
+      function adv(){
+        if(cur>=ids.length)return;
+        var d=ts[cur]-(cur?ts[cur-1]:0);
+        setTimeout(function(){cur++;if(cur<ids.length){setS(cur);fill.style.width=Math.min(85,cur/ids.length*90)+'%';adv();}else{setS(ids.length);fill.style.width='92%';}},d);
+      }
+      adv();
+      window._lt=setInterval(function(){
+        var s=Math.floor((Date.now()-t0)/1000),m=Math.floor(s/60);
+        tEl.textContent=(m?m+'m ':'')+s%60+'s';
+        if(cur>=ids.length){var p=parseFloat(fill.style.width)||92;if(p<98)fill.style.width=(p+0.2)+'%';}
+      },1000);
+    });
+  })();
+  </script>
+
+  {% if summary %}
+  <script>
+  (function(){
+    var o=document.getElementById('load-overlay'),f=document.getElementById('load-fill');
+    if(o){f.style.width='100%';setTimeout(function(){o.classList.remove('on');},350);}
+    if(window._lt)clearInterval(window._lt);
+  })();
+  </script>
+
+  <!-- ALERT OVERLAY -->
+  {% if summary.risk_level in ['high','medium'] or summary.get('playback_alerts') %}
+  <div id="alert-overlay" class="alert-overlay{% if summary.risk_level in ['high','medium'] and (summary.media_type != 'video' or not summary.get('playback_alerts')) %} visible{% endif %}" data-media-type="{{ summary.media_type }}">
+    <div id="alert-box" class="alert-box risk-{{ summary.risk_level }}">
+      <div id="a-time" class="a-time" style="display:none"></div>
+      <h2 id="a-title">{% if summary.risk_level=='high' %}Heads up — higher risk{% else %}Worth a look{% endif %}</h2>
+      <div id="a-body" class="a-body">
+        {% if summary.get('driver_assessment') %}<p class="driver-msg">{{ summary.driver_assessment }}</p>{% endif %}
+        {% if summary.tips %}<p>{{ summary.tips[0] }}</p>{% endif %}
+      </div>
+      <button type="button" class="a-cta" id="a-dismiss">Cool, got it</button>
+      <p class="a-disc">Scene-based analysis. Speed via optical flow (no telemetry).</p>
+    </div>
+  </div>
+  {% endif %}
+  {% if summary.get('playback_alerts') %}
+  <script type="application/json" id="pa-data">{{ summary.playback_alerts | tojson }}</script>
+  {% endif %}
+
+  <!-- RESULTS -->
+  <div class="results">
+    <div class="grid-main">
+      <!-- Left: media -->
+      <div class="panel panel-media">
+        <div class="section-label"><span class="dot"></span> Perception Output{% if summary.media_type=='video' %}<span class="badge">{{ summary.frames_processed }} frames</span>{% endif %}</div>
+        <div class="media-wrap">
+          {% if summary.media_type=='video' %}
+          <span class="media-badge">Annotated video</span>
+          <video id="annotated-{{ output_id }}" src="/annotated/{{ output_id }}" controls playsinline preload="auto"></video>
+          {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
+          <div class="alert-timeline" id="alert-timeline-{{ output_id }}" data-duration="{{ summary.duration_sec }}">
+            <div class="tl-label">Alert moments</div>
+            <div class="alert-timeline-bar">
+              {% for a in summary.playback_alerts %}
+              <button type="button" class="alert-marker {% if a.get('alert_type') == 'positive' %}positive{% else %}risk-{{ a.risk_level }}{% endif %}" data-index="{{ loop.index0 }}" data-time="{{ a.time }}" style="left: {{ (a.time / summary.duration_sec * 100) }}%;" title="{% if a.get('alert_type') == 'positive' %}✓ Good driving{% else %}⚠ Alert{% endif %} {{ loop.index }} at {{ a.time_label }}">{{ loop.index }}</button>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% else %}
+          <span class="media-badge">Annotated image</span>
+          <img class="out-img" src="/annotated/{{ output_id }}?t={{ output_id }}" alt="Annotated">
+          {% endif %}
+        </div>
+        <div class="media-info">
+          {% if summary.media_type=='video' %}
+          <span>{{ summary.frames_processed }} frames</span>
+          <a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.mp4' }}">Download video</a>
+          {% else %}
+          <span>Annotated detections</span>
+          <a href="/annotated/{{ output_id }}?download=1" download="{{ annotated_filename or 'annotated.jpg' }}">Download image</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right: pipeline -->
+      <div class="panel panel-analysis">
+        <div class="section-label"><span class="dot"></span> Analysis</div>
+        <div class="stages">
+
+          <!-- Perception -->
+          <div class="stage">
+            <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Perception</div>
+            <div class="chips">
+              <span class="chip"><span class="ci">🚗</span> {{ ((summary.detections.get('car',0)+summary.detections.get('truck',0)+summary.detections.get('bus',0)+summary.detections.get('motorcycle',0))|round(0)|int) }}</span>
+              <span class="chip"><span class="ci">🚶</span> {{ ((summary.detections.get('person',0)+summary.detections.get('pedestrian',0)+summary.detections.get('rider',0))|round(0)|int) }}</span>
+              <span class="chip"><span class="ci">🚦</span> {{ (summary.detections.get('traffic light',0)|round(0)|int) }}</span>
+              <span class="chip"><span class="ci">🛑</span> {{ ((summary.detections.get('stop sign',0)+summary.detections.get('traffic sign',0))|round(0)|int) }}</span>
+            </div>
+          </div>
+
+          <!-- Decision -->
+          <div class="stage">
+            <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Decision</div>
+            {% if summary.get('scene_type') %}
+            <div class="chips" style="margin-bottom:8px">
+              <span class="chip chip-scene">{{ summary.scene_type|upper }}</span>
+              {% if summary.get('co2_gkm') %}<span class="chip chip-co2">{{ summary.co2_gkm }} g/km CO2</span>{% endif %}
+              {% if summary.get('fuel_penalty_pct') and summary.fuel_penalty_pct > 0 %}<span class="chip chip-fuel">+{{ summary.fuel_penalty_pct }}% fuel</span>{% endif %}
+            </div>
+            {% endif %}
+            <div class="metrics">
+              <div class="eco-ring" style="--eco-pct: {{ summary.eco_score }}">
+                <div class="eco-ring-inner">{{ summary.eco_score }}</div>
+              </div>
+              <div class="mbox risk-{{ summary.risk_level }}">
+                <div class="mbox-k">Risk</div>
+                <div class="mbox-v">{{ summary.risk_level|upper }}</div>
+              </div>
+              <div class="mbox">
+                <div class="mbox-k">Eco Score</div>
+                <div class="mbox-v">{{ summary.eco_score }}<span class="mbox-sm">/100</span></div>
+              </div>
+            </div>
+            {% if summary.get('co2_impact') %}<div class="co2-line"><span class="mbox-k">CO₂ impact</span><span class="co2-val">{{ summary.co2_impact }}</span></div>{% endif %}
+            {% if summary.get('comparison') %}<div class="compare-note">{{ summary.comparison }}</div>{% endif %}
+            {% if summary.get('skill_focus') %}
+            <div class="focus-tags">
+              {% for s in summary.skill_focus %}<span class="focus-tag">{{ s }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            {% if summary.get('driver_assessment') %}<div class="assess">{{ summary.driver_assessment }}</div>{% endif %}
+          </div>
+
+          <!-- Recommendations -->
+          <div class="stage">
+            <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Recommendations</div>
+            <ul class="tips-list">
+              {% for t in summary.tips %}<li>{{ t }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Trip Analytics (video) -->
+        {% if summary.get('trip_summary') %}
+        {% set ts = summary.trip_summary %}
+        
+        <!-- Driving Style Classification -->
+        {% if ts.get('driving_style') %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Driving Style Analysis</div>
+          <div class="style-classification">
+            <div class="style-badge">{{ ts.driving_style.driving_style }}</div>
+            {% if ts.driving_style.characteristics %}
+            <div class="style-traits">
+              {% for trait in ts.driving_style.characteristics %}
+              <span class="trait-tag">{{ trait }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="dimension-scores">
+            <div class="dim-score">
+              <div class="dim-label">Smoothness</div>
+              <div class="dim-bar-wrap">
+                <div class="dim-bar" style="width:{{ ts.driving_style.smoothness_score }}%;background:var(--green)"></div>
+              </div>
+              <div class="dim-val">{{ ts.driving_style.smoothness_score }}</div>
+            </div>
+            <div class="dim-score">
+              <div class="dim-label">Anticipation</div>
+              <div class="dim-bar-wrap">
+                <div class="dim-bar" style="width:{{ ts.driving_style.anticipation_score }}%;background:var(--accent)"></div>
+              </div>
+              <div class="dim-val">{{ ts.driving_style.anticipation_score }}</div>
+            </div>
+            <div class="dim-score">
+              <div class="dim-label">Efficiency</div>
+              <div class="dim-bar-wrap">
+                <div class="dim-bar" style="width:{{ ts.driving_style.efficiency_score }}%;background:var(--amber)"></div>
+              </div>
+              <div class="dim-val">{{ ts.driving_style.efficiency_score }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Fuel & Cost Analysis -->
+        {% if ts.get('fuel_consumption') %}
+        {% set fuel = ts.fuel_consumption %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Fuel & Cost</div>
+          <div class="fuel-grid">
+            <div class="fuel-metric">
+              <div class="fuel-icon">⛽</div>
+              <div class="fuel-data">
+                <div class="fuel-value">{{ fuel.liters_used }}L</div>
+                <div class="fuel-label">Fuel Used</div>
+              </div>
+            </div>
+            <div class="fuel-metric">
+              <div class="fuel-icon">📊</div>
+              <div class="fuel-data">
+                <div class="fuel-value">{{ fuel.liters_per_100km }}L</div>
+                <div class="fuel-label">per 100km</div>
+              </div>
+            </div>
+            <div class="fuel-metric">
+              <div class="fuel-icon">🇺🇸</div>
+              <div class="fuel-data">
+                <div class="fuel-value">{{ fuel.mpg_us }} MPG</div>
+                <div class="fuel-label">US Rating</div>
+              </div>
+            </div>
+            <div class="fuel-metric">
+              <div class="fuel-icon">💵</div>
+              <div class="fuel-data">
+                <div class="fuel-value">${{ fuel.cost_usd }}</div>
+                <div class="fuel-label">Trip Cost</div>
+              </div>
+            </div>
+          </div>
+          {% if fuel.potential_savings_year_usd > 0 %}
+          <div class="savings-callout">
+            <strong>💰 Potential Annual Savings:</strong> ${{ fuel.potential_savings_year_usd }}/year if you drive at optimal efficiency
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- CO2 Phase Breakdown -->
+        {% if ts.get('co2_phases') %}
+        {% set phases = ts.co2_phases %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> CO₂ Emissions by Phase</div>
+          <div class="phase-breakdown">
+            <div class="phase-item">
+              <div class="phase-header">
+                <span class="phase-name">🚀 Acceleration</span>
+                <span class="phase-pct">{{ phases.acceleration_pct }}%</span>
+              </div>
+              <div class="phase-co2">{{ phases.acceleration_co2 }} g/km</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-header">
+                <span class="phase-name">🛣️ Cruising</span>
+                <span class="phase-pct">{{ phases.cruising_pct }}%</span>
+              </div>
+              <div class="phase-co2">{{ phases.cruising_co2 }} g/km</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-header">
+                <span class="phase-name">🛑 Braking</span>
+                <span class="phase-pct">{{ phases.braking_pct }}%</span>
+              </div>
+              <div class="phase-co2">{{ phases.braking_co2 }} g/km</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-header">
+                <span class="phase-name">⏸️ Idling</span>
+                <span class="phase-pct">{{ phases.idling_pct }}%</span>
+              </div>
+              <div class="phase-co2">{{ phases.idling_co2 }} g/km</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Actionable Insights -->
+        {% if ts.get('actionable_insights') and ts.actionable_insights %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green-bright)"></span> Your Action Plan</div>
+          <div class="insights-list">
+            {% for insight in ts.actionable_insights %}
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-category">{{ insight.category }}</span>
+                <span class="insight-difficulty difficulty-{{ insight.difficulty|lower }}">{{ insight.difficulty }}</span>
+              </div>
+              <div class="insight-issue">{{ insight.issue }}</div>
+              <div class="insight-rec">✓ {{ insight.recommendation }}</div>
+              <div class="insight-impact">{{ insight.impact }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Top Ranked Alerts -->
+        {% if ts.get('top_alerts') and ts.top_alerts %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--red)"></span> Top Moments To Review</div>
+          <div class="top-alerts">
+            {% for a in ts.top_alerts %}
+            <div class="top-alert-item">
+              <div class="top-alert-rank {{ 'positive' if a.get('alert_type') == 'positive' else 'warning' }}">{{ loop.index }}</div>
+              <div class="top-alert-text">
+                <strong>{{ a.time_label }}</strong> - {{ a.get('explanation', a.get('reason','Key event')) }}
+              </div>
+              <div class="top-alert-score">{{ a.get('impact_score', 0) }}/100</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Cross-Trip Trends -->
+        {% if ts.get('trends') %}
+        {% set tr = ts.trends %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--accent)"></span> Trend Snapshot</div>
+          <div class="trend-grid">
+            <div class="trend-card">
+              <div class="trend-k">Trips analyzed</div>
+              <div class="trend-v">{{ tr.trip_count }}</div>
+            </div>
+            <div class="trend-card">
+              <div class="trend-k">CO2 avg (last 7)</div>
+              <div class="trend-v">{{ tr.avg_co2_last7 }} g/km</div>
+            </div>
+            <div class="trend-card">
+              <div class="trend-k">Delta CO2 vs prev</div>
+              <div class="trend-v">{{ tr.delta_co2_vs_prev }} g/km</div>
+              <div class="trend-delta {{ 'up' if tr.delta_co2_vs_prev <= 0 else 'down' }}">{{ 'Improved' if tr.delta_co2_vs_prev <= 0 else 'Worse' }}</div>
+            </div>
+            <div class="trend-card">
+              <div class="trend-k">Smoothness delta</div>
+              <div class="trend-v">{{ tr.delta_smoothness_vs_prev }}</div>
+              <div class="trend-delta {{ 'up' if tr.delta_smoothness_vs_prev >= 0 else 'down' }}">{{ 'Improved' if tr.delta_smoothness_vs_prev >= 0 else 'Dropped' }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Personalized Targets -->
+        {% if ts.get('personalized_targets') %}
+        {% set tgt = ts.personalized_targets %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--amber)"></span> Personalized Targets</div>
+          <div class="targets-list">
+            {% for k, v in tgt.items() %}
+            <div class="target-item">
+              <div class="target-head">
+                <span>{{ k|replace('_',' ') }}</span>
+                <span class="target-gap">{% if v.gap > 0 %}+{{ v.gap }} to target{% else %}target reached{% endif %}</span>
+              </div>
+              <div class="target-meta">Current {{ v.current }} - Baseline {{ v.baseline }} - Target {{ v.target }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- What-if Savings Simulator -->
+        {% if ts.get('savings_simulation') %}
+        {% set sim = ts.savings_simulation %}
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green-bright)"></span> What-if Savings Simulator</div>
+          <div class="sim-grid">
+            <div class="sim-card">
+              <div class="sim-k">Smoothness +10</div>
+              <div class="sim-v">${{ sim.if_smoothness_plus_10 }}</div>
+            </div>
+            <div class="sim-card">
+              <div class="sim-k">Anticipation +10</div>
+              <div class="sim-v">${{ sim.if_anticipation_plus_10 }}</div>
+            </div>
+            <div class="sim-card">
+              <div class="sim-k">Efficiency +10</div>
+              <div class="sim-v">${{ sim.if_efficiency_plus_10 }}</div>
+            </div>
+            <div class="sim-card">
+              <div class="sim-k">If all targets hit</div>
+              <div class="sim-v">${{ sim.if_all_targets_hit }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Original Trip Summary -->
+        <div class="trip">
+          <div class="stage-head"><span class="stage-dot" style="background:var(--green)"></span> Trip Overview</div>
+          <div class="trip-chips">
+            <span class="chip chip-co2">{{ ts.total_co2_g }}g CO2</span>
+            <span class="chip">{{ ts.avg_co2_gkm }} g/km avg</span>
+            <span class="chip">{{ ts.distance_est_km }} km</span>
+            {% if ts.efficiency_loss_pct > 0 %}<span class="chip chip-fuel">-{{ ts.efficiency_loss_pct }}% eff</span>{% endif %}
+          </div>
+          <div class="risk-bar">
+            {% if ts.green_pct > 0 %}<div style="width:{{ ts.green_pct }}%;background:var(--risk-low)"></div>{% endif %}
+            {% if ts.yellow_pct > 0 %}<div style="width:{{ ts.yellow_pct }}%;background:var(--risk-medium)"></div>{% endif %}
+            {% if ts.red_pct > 0 %}<div style="width:{{ ts.red_pct }}%;background:var(--risk-high)"></div>{% endif %}
+          </div>
+          <div class="risk-legend">
+            <span><span class="rdot" style="background:var(--risk-low)"></span> Low {{ ts.green_pct }}%</span>
+            <span><span class="rdot" style="background:var(--risk-medium)"></span> Med {{ ts.yellow_pct }}%</span>
+            <span><span class="rdot" style="background:var(--risk-high)"></span> High {{ ts.red_pct }}%</span>
+          </div>
+          <div class="segs">
+            <span>Best: <strong style="color:var(--risk-low)">{{ ts.best_segment }}</strong></span>
+            <span>Worst: <strong style="color:var(--risk-high)">{{ ts.worst_segment }}</strong></span>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Collapsible raw -->
+        <button class="raw-toggle" id="raw-toggle">&#9654; Raw detections</button>
+        <div class="raw-content" id="raw-content">
+          <pre>{{ summary.detections | tojson(indent=2) }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="foot">
+    <span class="pill pill-torch">PyTorch</span>
+    <span class="pill pill-yolo">ExecuTorch</span>
+    <p>Ultralytics YOLO + PyTorch. ExecuTorch export in <code>executorch/</code> for on-device inference. <a href="https://pytorch.org/executorch/" target="_blank" rel="noopener">Learn more</a> &middot; SF Hacks 2026</p>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+  // Raw toggle
+  var rt=document.getElementById('raw-toggle'),rc=document.getElementById('raw-content');
+  if(rt)rt.onclick=function(){var o=rc.classList.toggle('open');rt.innerHTML=(o?'&#9660;':'&#9654;')+' Raw detections';};
+
+  // Animated eco score counter
+  (function(){
+    var rings=document.querySelectorAll('.eco-ring-inner');
+    rings.forEach(function(ring){
+      var target=parseInt(ring.textContent)||0;
+      if(target<=0)return;
+      var current=0,step=Math.ceil(target/30),dur=800;
+      ring.textContent='0';
+      var start=Date.now();
+      function animate(){
+        var elapsed=Date.now()-start;
+        var progress=Math.min(elapsed/dur,1);
+        current=Math.floor(target*progress);
+        ring.textContent=current;
+        if(progress<1)requestAnimationFrame(animate);
+        else ring.textContent=target;
+      }
+      setTimeout(animate,200);
+    });
+  })();
+
+  // Scroll-triggered fade-in for stages
+  (function(){
+    var stages=document.querySelectorAll('.stage');
+    if(!stages.length)return;
+    var observer=new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting)entry.target.classList.add('visible');
+      });
+    },{threshold:0.1});
+    stages.forEach(function(stage){stage.classList.add('fade-in');observer.observe(stage);});
+  })();
+
+  // Success toast after results load
+  (function(){
+    if(!document.querySelector('.results'))return;
+    var toast=document.createElement('div');
+    toast.className='toast';
+    toast.innerHTML='<span style="font-size:18px;margin-right:8px">✓</span><span>Done! Check your eco score and tips below.</span>';
+    document.body.appendChild(toast);
+    setTimeout(function(){toast.classList.add('show');},300);
+    setTimeout(function(){toast.classList.remove('show');},4000);
+    setTimeout(function(){toast.remove();},4500);
+  })();
+  </script>
+  <script>
+  (function(){
+    var ov=document.getElementById('alert-overlay'),vid=document.querySelector('video'),
+        box=document.getElementById('alert-box'),tEl=document.getElementById('a-time'),
+        hEl=document.getElementById('a-title'),bEl=document.getElementById('a-body'),
+        dis=document.getElementById('a-dismiss');
+    if(!ov)return;
+    var isV=ov.dataset.mediaType==='video';
+    var pa=[];try{var d=document.getElementById('pa-data');if(d)pa=JSON.parse(d.textContent);}catch(e){}
+
+    function show(a){
+      if(!a)return;
+      var r=a.risk_level||'medium';
+      var isPositive=a.alert_type==='positive';
+      box.className='alert-box '+(isPositive?'positive':'risk-'+r);
+      if(tEl){if(a.time_label){tEl.textContent='At '+a.time_label;tEl.style.display='block';}else tEl.style.display='none';}
+      
+      // Set title and icon based on alert type
+      if(isPositive){
+        hEl.innerHTML='<span class="alert-icon">✨</span>Nice one';
+      }else{
+        var icon=r==='high'?'⚠️':'⚡';
+        hEl.innerHTML='<span class="alert-icon">'+icon+'</span>'+(r==='high'?'Heads up — higher risk':'Worth a look');
+      }
+      bEl.innerHTML='';
+      if(a.scene_type||a.co2_gkm){
+        var row=document.createElement('div');row.className='chips';row.style.marginBottom='10px';
+        if(a.scene_type){var s=document.createElement('span');s.className='chip chip-scene';s.textContent=a.scene_type.toUpperCase();row.appendChild(s);}
+        if(a.co2_gkm){var c=document.createElement('span');c.className='chip chip-co2';c.textContent=a.co2_gkm+' g/km';row.appendChild(c);}
+        if(a.fuel_penalty_pct>0){var f=document.createElement('span');f.className='chip chip-fuel';f.textContent='+'+a.fuel_penalty_pct+'%';row.appendChild(f);}
+        if(a.est_mph){var m=document.createElement('span');m.className='chip';m.style.fontWeight='700';m.textContent='~'+a.est_mph+' mph';row.appendChild(m);}
+        if(a.confidence){var cf=document.createElement('span');cf.className='chip';cf.style.fontWeight='700';cf.textContent='Confidence: '+String(a.confidence).toUpperCase();row.appendChild(cf);}
+        bEl.appendChild(row);
+      }
+      if(a.explanation){var ex=document.createElement('p');ex.style.cssText='font-size:12px;color:var(--text-3);margin-bottom:8px';ex.textContent=a.explanation;bEl.appendChild(ex);}
+      if(a.driver_assessment){var p=document.createElement('p');p.className='driver-msg';p.textContent=a.driver_assessment;bEl.appendChild(p);}
+      if(a.tip){var p2=document.createElement('p');p2.textContent=a.tip;bEl.appendChild(p2);}
+      if(a.comparison){var p3=document.createElement('p');p3.style.cssText='font-size:11px;color:var(--text-4);margin-top:6px';p3.textContent=a.comparison;bEl.appendChild(p3);}
+      if(a.distance_tip){var p4=document.createElement('p');p4.className='distance-tip';p4.textContent=a.distance_tip;bEl.appendChild(p4);}
+      ov.classList.add('visible');ov.style.display='grid';
+    }
+    function hide(){ov.classList.remove('visible');ov.style.display='none';if(vid&&isV)vid.play().catch(function(){});}
+    dis&&dis.addEventListener('click',hide);
+    if(!isV)return;
+    ov.classList.remove('visible');ov.style.display='none';
+    if(!vid||!pa.length)return;
+    var fired={},pid=null;
+    function chk(){
+      if(vid.paused||vid.ended)return;
+      var t=vid.currentTime;
+      for(var i=0;i<pa.length;i++){if(fired[i])continue;if(t>=pa[i].time&&t<=pa[i].time+0.8){fired[i]=1;vid.pause();show(pa[i]);return;}}
+    }
+    vid.addEventListener('play',function(){if(pid)clearInterval(pid);pid=setInterval(chk,150);});
+    vid.addEventListener('pause',function(){if(pid){clearInterval(pid);pid=null;}});
+    vid.addEventListener('ended',function(){if(pid){clearInterval(pid);pid=null;}});
+    vid.addEventListener('seeked',function(){var t=vid.currentTime;for(var i=0;i<pa.length;i++)if(pa[i].time>t+0.5)delete fired[i];});
+    // Click timeline marker -> seek and show alert immediately
+    document.querySelectorAll('.alert-marker').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(btn.getAttribute('data-index'));
+        var t=parseFloat(btn.getAttribute('data-time'));
+        if(!isNaN(t)&&!isNaN(idx)&&vid&&pa[idx]){
+          vid.pause();
+          vid.currentTime=t;
+          fired[idx]=1;
+          show(pa[idx]);
+        }
+      });
+    });
+  })();
+  </script>
+  {% endif %}
+</body>
+</html>
