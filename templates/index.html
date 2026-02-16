@@ -513,6 +513,11 @@
     video:focus, .out-img:focus { outline: none; box-shadow: 0 0 0 2px var(--accent); }
     .media-wrap:hover video, .media-wrap:hover .out-img { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .media-wrap { position: relative; border-radius: var(--radius); overflow: hidden; contain: layout paint; }
+    .media-view-switch { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .view-toggle { display: inline-flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: var(--bg-raised); }
+    .view-btn { font-size: 11px; font-weight: 600; padding: 6px 12px; border: none; background: transparent; color: var(--text-3); cursor: pointer; transition: color 0.2s, background 0.2s; }
+    .view-btn:hover { color: var(--text); background: var(--card); }
+    .view-btn.active { background: var(--accent); color: #0f1210; }
     .media-badge {
       display: inline-block;
       font-size: 10px; font-weight: 600;
@@ -1245,7 +1250,15 @@
       <div class="panel panel-media">
         <div class="section-label"><span class="dot"></span> Video<span class="badge">{{ summary.frames_processed }} fr</span><span class="info-wrap"><span class="info-icon" aria-label="What is this?">i</span><span class="info-popover">Your clip with AI bounding boxes on detected objects. &quot;fr&quot; = frames we analyzed (e.g. 30 fr/sec at 30 fps).</span></span></div>
         {% if video_available %}
-        <span class="media-badge">Video</span>
+        <div class="media-view-switch">
+          <span class="media-badge">Video</span>
+          {% if summary.get('flow_media') %}
+          <span class="view-toggle" role="group" aria-label="Switch view">
+            <button type="button" class="view-btn active" data-src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" aria-pressed="true">Detection</button>
+            <button type="button" class="view-btn" data-src="/flow/{{ output_id }}?v={{ output_id }}" aria-pressed="false">Optical flow</button>
+          </span>
+          {% endif %}
+        </div>
         <div class="media-wrap">
           <video id="annotated-{{ output_id }}" data-output-id="{{ output_id }}" src="/annotated/{{ output_id }}?v={{ output_id }}{% if cache_bust %}&_={{ cache_bust }}{% endif %}" controls playsinline preload="auto"></video>
           {% if summary.get('playback_alerts') and summary.get('duration_sec') %}
@@ -1510,12 +1523,12 @@
             <div class="trend-card">
               <div class="trend-k">Δ CO2</div>
               <div class="trend-v"><span class="unit-metric">{{ tr.delta_co2_vs_prev }} g/km</span><span class="unit-imperial">{{ (tr.delta_co2_vs_prev * 1.60934) | round(1) }} g/mi</span></div>
-              <div class="trend-delta {{ 'up' if tr.delta_co2_vs_prev <= 0 else 'down' }}">{{ 'Improved' if tr.delta_co2_vs_prev <= 0 else 'Worse' }}</div>
+              <div class="trend-delta {{ 'up' if tr.delta_co2_vs_prev < 0 else ('down' if tr.delta_co2_vs_prev > 0 else '') }}">{% if tr.delta_co2_vs_prev < 0 %}Improved{% elif tr.delta_co2_vs_prev > 0 %}Worse{% else %}No change{% endif %}</div>
             </div>
             <div class="trend-card">
               <div class="trend-k">Δ Smooth</div>
               <div class="trend-v">{{ tr.delta_smoothness_vs_prev }}</div>
-              <div class="trend-delta {{ 'up' if tr.delta_smoothness_vs_prev >= 0 else 'down' }}">{{ 'Improved' if tr.delta_smoothness_vs_prev >= 0 else 'Dropped' }}</div>
+              <div class="trend-delta {{ 'up' if tr.delta_smoothness_vs_prev > 0 else ('down' if tr.delta_smoothness_vs_prev < 0 else '') }}">{% if tr.delta_smoothness_vs_prev > 0 %}Improved{% elif tr.delta_smoothness_vs_prev < 0 %}Dropped{% else %}No change{% endif %}</div>
             </div>
           </div>
         </div>
@@ -1785,6 +1798,18 @@
   (function(){
     document.querySelectorAll('[data-pct]').forEach(function(el){ var p=el.getAttribute('data-pct'); if(p!==null&&p!=='')el.style.width=p+'%'; });
     document.querySelectorAll('.alert-marker[data-left]').forEach(function(el){ var l=el.getAttribute('data-left'); if(l!==null&&l!=='')el.style.left=l+'%'; });
+    document.querySelectorAll('.view-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var panel=btn.closest('.panel-media');
+        var vid=panel?panel.querySelector('video'):document.querySelector('video');
+        var src=btn.getAttribute('data-src');
+        if(!vid||!src)return;
+        vid.src=src;
+        vid.load();
+        btn.parentElement.querySelectorAll('.view-btn').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+        btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+      });
+    });
   })();
   </script>
 </body>

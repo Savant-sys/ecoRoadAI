@@ -23,7 +23,7 @@ torch.set_num_threads(_cpu_count)
 if hasattr(torch, "set_num_interop_threads"):
     torch.set_num_interop_threads(min(16, max(1, _cpu_count // 2)))
 
-from app.config import ROOT, OUTPUT_DIR, DETECT_DIR, OUTPUT_PARALLEL_DIR, TRIP_HISTORY_PATH
+from app.config import ROOT, OUTPUT_DIR, DETECT_DIR, OUTPUT_PARALLEL_DIR, TRIP_HISTORY_PATH, SUMMARIES_DIR
 
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".avi", ".webm", ".mkv")
 
@@ -208,10 +208,15 @@ def _run_batched_video(model, source, predict_kw, run_name, device):
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(str(out_path), fourcc, fps, (w, h))
+    save_flow_vis = os.environ.get("ECOROAD_SAVE_FLOW_VIS", "").strip().lower() in ("1", "true", "yes")
+    flow_writer = None
+    if save_flow_vis:
+        flow_path = out_dir / ("flow_" + out_path.stem + out_path.suffix)
+        flow_writer = cv2.VideoWriter(str(flow_path), fourcc, fps, (w, h))
     results_list = []
     batch = []
     raw_frames = []  # keep original frames for optical flow
-    speed_est = SpeedEstimator(fps=fps)
+    speed_est = SpeedEstimator(fps=fps, save_flow_vis=save_flow_vis)
 
     def _write_batch(pred_results, orig_frames):
         for r, orig in zip(pred_results, orig_frames):
@@ -219,9 +224,12 @@ def _run_batched_video(model, source, predict_kw, run_name, device):
             img = r.plot()
             if img is not None:
                 counts = summarize_detections([r])
-                mph = speed_est.update(orig, counts)
+                mph, flow_vis = speed_est.update(orig, counts)
                 _draw_speed_on_frame(img, mph)
                 writer.write(img)
+                if flow_writer is not None and flow_vis is not None:
+                    flow_frame = cv2.resize(flow_vis, (w, h), interpolation=cv2.INTER_LINEAR)
+                    flow_writer.write(flow_frame)
 
     while True:
         ret, frame = cap.read()
@@ -242,6 +250,8 @@ def _run_batched_video(model, source, predict_kw, run_name, device):
 
     cap.release()
     writer.release()
+    if flow_writer is not None:
+        flow_writer.release()
     speed_est.finalize()
     return results_list, out_dir, fps, speed_est
 
@@ -335,6 +345,20 @@ def _assumed_mph(counts):
         return max(10, min(45, round(base)))
 
 
+def _flow_to_bgr(flow):
+    """Convert optical flow (H, W, 2) to BGR visualization. Hue = direction, value = magnitude."""
+    h, w = flow.shape[:2]
+    fx, fy = flow[..., 0], flow[..., 1]
+    mag, ang = cv2.cartToPolar(fx, fy)
+    hsv = np.zeros((h, w, 3), dtype=np.uint8)
+    hsv[..., 0] = ang * 180 / np.pi / 2  # hue 0-180
+    hsv[..., 1] = 255
+    mag_clip = np.clip(mag, 0, None)
+    max_mag = max(mag_clip.max(), 1e-6)
+    hsv[..., 2] = np.clip(255 * mag_clip / max_mag, 0, 255).astype(np.uint8)
+    return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+
 class SpeedEstimator:
     """
     Estimate ego-vehicle speed from optical flow (frame-to-frame pixel motion).
@@ -357,12 +381,14 @@ class SpeedEstimator:
     IDLE_THRESHOLD_MPH = 2  # below this speed = idling
     HARD_BRAKE_MPH_DROP = 10  # speed drop per second that counts as hard braking
 
-    def __init__(self, fps=30.0):
+    def __init__(self, fps=30.0, save_flow_vis=False):
         self.fps = fps
         self.prev_gray = None
         self.smooth_mph = None
         self._scale = 0.5
         self._frame_idx = 0
+        self.save_flow_vis = save_flow_vis
+        self._last_flow_vis = None  # BGR (roi size) for current frame
         # Idle tracking
         self._idle_start = None
         self.idle_events = []       # [{"start_frame": int, "duration_sec": float}, ...]
@@ -387,6 +413,10 @@ class SpeedEstimator:
                 pyr_scale=0.5, levels=3, winsize=15,
                 iterations=3, poly_n=5, poly_sigma=1.2, flags=0,
             )
+            if self.save_flow_vis:
+                self._last_flow_vis = _flow_to_bgr(flow)
+            else:
+                self._last_flow_vis = None
             mag = np.sqrt(flow[..., 0] ** 2 + flow[..., 1] ** 2)
             # Use 75th percentile instead of median — more sensitive to dominant motion,
             # less affected by static regions (parked cars, sky leaking into ROI)
@@ -401,6 +431,7 @@ class SpeedEstimator:
         else:
             # First frame: fall back to detection heuristic
             raw_mph = float(_assumed_mph(counts or {}))
+            self._last_flow_vis = None
 
         self.prev_gray = roi
 
@@ -444,7 +475,8 @@ class SpeedEstimator:
                     })
 
         self._frame_idx += 1
-        return speed
+        flow_vis = self._last_flow_vis  # ROI-sized BGR or None
+        return speed, flow_vis
 
     def finalize(self):
         """Call after last frame to close any open idle streak."""
@@ -650,8 +682,19 @@ def _build_savings_simulation(trip_summary):
     anticipation = float(style.get("anticipation_score", 0))
     efficiency = float(style.get("efficiency_score", 0))
 
+    # When trip is short (potential_savings_year_usd is 0), use nominal annual base from this trip's cost
+    # so what-if still shows meaningful numbers instead of always $0.
+    if annual_base <= 0:
+        cost_usd = float(fuel.get("cost_usd", 0))
+        distance_km = float(trip_summary.get("distance_est_km", 0))
+        if cost_usd > 0 and distance_km > 0:
+            annual_km = 19312
+            trips_per_year = min(annual_km / distance_km, 600)
+            annual_base = min(cost_usd * trips_per_year * 0.15, 2000.0)  # ~15% savings if improving, cap for short clips
+        else:
+            annual_base = 200.0  # fallback so we don't show all zeros
+
     # Score-dependent what-if: the worse your current score, the more room to improve.
-    # A driver at 90 smoothness gets near-zero projection; one at 20 gets a big one.
     smooth_factor = max(0, (90 - smooth) / 100) * 0.5
     anticipation_factor = max(0, (85 - anticipation) / 100) * 0.4
     efficiency_factor = max(0, (90 - efficiency) / 100) * 0.55
@@ -1464,9 +1507,9 @@ def main():
 
     video_fps = None
     if is_video:
-        # Batched path: draws speed (Farneback optical flow) on every frame; works on both CPU and CUDA
-        default_batch = "32" if device == "cuda" else "8"
-        print("Batched video inference (ECOROAD_BATCH_SIZE, default %s)" % default_batch)
+        # Batched path: draws speed (OpenCV Farneback flow) on each frame; GPU uses larger batch, CPU still gets speed + optional flow
+        batch_hint = "default 32" if device == "cuda" else "default 8"
+        print("Batched video inference (batch size from ECOROAD_BATCH_SIZE, %s)" % batch_hint)
         results_list, latest, video_fps, speed_est_obj = _run_batched_video(model, source, predict_kw, run_name or "predict_batch", device)
         counts = aggregate_counts_from_frames(results_list)
         frames_processed = len(results_list)
@@ -1501,6 +1544,7 @@ def main():
     output_id = (args.output_id or os.environ.get("ECOROAD_OUTPUT_ID", "")).strip()
     annotated_base = ("annotated_" + output_id) if output_id and not segment_out else "annotated"
 
+    flow_media_name = None
     if is_video:
         annotated_src = latest / source_name
         if not annotated_src.exists():
@@ -1512,6 +1556,15 @@ def main():
         else:
             annotated_dst = out_dir / (annotated_base + Path(annotated_src).suffix)
             shutil.copyfile(annotated_src, annotated_dst)
+        # Copy flow visualization to OUTPUT_DIR if present (from ECOROAD_SAVE_FLOW_VIS=1 batched run)
+        flow_media_name = None
+        flow_src = latest / ("flow_" + Path(source).stem + Path(annotated_src).suffix)
+        if not flow_src.exists():
+            flow_src = latest / ("flow_" + Path(source).stem + ".mp4")
+        if flow_src.exists() and output_id:
+            flow_dst = out_dir / ("flow_" + output_id + ".mp4")
+            shutil.copyfile(flow_src, flow_dst)
+            flow_media_name = flow_dst.name
     else:
         # Image: we already ran with save=False and have the result; save the plot directly (avoids using wrong file from predict/)
         res = results[0] if hasattr(results, "__getitem__") else next(iter(results))
@@ -1537,7 +1590,7 @@ def main():
     playback_alerts = []
     trip_summary = {}
     duration_sec = 0.0
-    # speed_est_obj is set whenever we use batched video (CPU or CUDA)
+    # speed_est_obj is set for all video (batched path on both CPU and GPU)
     if not is_video:
         speed_est_obj = None
     if is_video and results_list and frames_processed > 0:
@@ -1587,6 +1640,8 @@ def main():
         "annotated_media": annotated_dst.name,
         **eco,
     }
+    if is_video and flow_media_name:
+        summary["flow_media"] = flow_media_name
     if is_video:
         summary["playback_alerts"] = playback_alerts
         if trip_summary:
@@ -1596,6 +1651,10 @@ def main():
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     if not segment_out:
         (OUTPUT_DIR / "last_media_type.txt").write_text(media_type)
+        # Write per-run summary so the app always loads this run's data (fixes second-video wrong data)
+        if output_id:
+            SUMMARIES_DIR.mkdir(parents=True, exist_ok=True)
+            (SUMMARIES_DIR / f"{output_id}.json").write_text(json.dumps(summary, indent=2))
     print("Saved summary and", annotated_dst.name)
 
 

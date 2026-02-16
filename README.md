@@ -71,6 +71,7 @@ The app uses a **pre-trained** YOLO model (`yolov8n.pt`). Optional fine-tuning o
 - `ECOROAD_MODEL_PATH` — path to weights (default: `yolov8n.pt`)
 - `ECOROAD_CONF` — detection confidence 0–1 (default: `0.25`)
 - `ECOROAD_DEVICE` — `cuda` or `cpu`
+- `ECOROAD_SAVE_FLOW_VIS` — set to `1` to save a Farneback optical-flow visualization video (GPU/batched runs only). In the app, use the **Detection | Optical flow** toggle to switch the player to the flow view.
 
 ---
 
