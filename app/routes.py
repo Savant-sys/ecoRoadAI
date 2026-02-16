@@ -183,7 +183,12 @@ def register_routes(app):
                 check=True,
                 cwd=str(ROOT),
             )
-            summary = json.loads((OUTPUT_DIR / "summary.json").read_text())
+            # Prefer per-run summary written by pipeline (fixes second run showing wrong/zeros)
+            summary_path = SUMMARIES_DIR / f"{output_id}.json"
+            if summary_path.exists():
+                summary = json.loads(summary_path.read_text())
+            else:
+                summary = json.loads((OUTPUT_DIR / "summary.json").read_text())
             annotated_filename = summary.get("annotated_media")
             _save_history_entry(output_id, orig_filename, summary)
             # Redirect so the URL reflects this run and the browser loads the new video (avoids showing first video)

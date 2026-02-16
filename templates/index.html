@@ -1523,12 +1523,12 @@
             <div class="trend-card">
               <div class="trend-k">Δ CO2</div>
               <div class="trend-v"><span class="unit-metric">{{ tr.delta_co2_vs_prev }} g/km</span><span class="unit-imperial">{{ (tr.delta_co2_vs_prev * 1.60934) | round(1) }} g/mi</span></div>
-              <div class="trend-delta {{ 'up' if tr.delta_co2_vs_prev <= 0 else 'down' }}">{{ 'Improved' if tr.delta_co2_vs_prev <= 0 else 'Worse' }}</div>
+              <div class="trend-delta {{ 'up' if tr.delta_co2_vs_prev < 0 else ('down' if tr.delta_co2_vs_prev > 0 else '') }}">{% if tr.delta_co2_vs_prev < 0 %}Improved{% elif tr.delta_co2_vs_prev > 0 %}Worse{% else %}No change{% endif %}</div>
             </div>
             <div class="trend-card">
               <div class="trend-k">Δ Smooth</div>
               <div class="trend-v">{{ tr.delta_smoothness_vs_prev }}</div>
-              <div class="trend-delta {{ 'up' if tr.delta_smoothness_vs_prev >= 0 else 'down' }}">{{ 'Improved' if tr.delta_smoothness_vs_prev >= 0 else 'Dropped' }}</div>
+              <div class="trend-delta {{ 'up' if tr.delta_smoothness_vs_prev > 0 else ('down' if tr.delta_smoothness_vs_prev < 0 else '') }}">{% if tr.delta_smoothness_vs_prev > 0 %}Improved{% elif tr.delta_smoothness_vs_prev < 0 %}Dropped{% else %}No change{% endif %}</div>
             </div>
           </div>
         </div>

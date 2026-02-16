@@ -23,7 +23,7 @@ torch.set_num_threads(_cpu_count)
 if hasattr(torch, "set_num_interop_threads"):
     torch.set_num_interop_threads(min(16, max(1, _cpu_count // 2)))
 
-from app.config import ROOT, OUTPUT_DIR, DETECT_DIR, OUTPUT_PARALLEL_DIR, TRIP_HISTORY_PATH
+from app.config import ROOT, OUTPUT_DIR, DETECT_DIR, OUTPUT_PARALLEL_DIR, TRIP_HISTORY_PATH, SUMMARIES_DIR
 
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".avi", ".webm", ".mkv")
 
@@ -682,8 +682,19 @@ def _build_savings_simulation(trip_summary):
     anticipation = float(style.get("anticipation_score", 0))
     efficiency = float(style.get("efficiency_score", 0))
 
+    # When trip is short (potential_savings_year_usd is 0), use nominal annual base from this trip's cost
+    # so what-if still shows meaningful numbers instead of always $0.
+    if annual_base <= 0:
+        cost_usd = float(fuel.get("cost_usd", 0))
+        distance_km = float(trip_summary.get("distance_est_km", 0))
+        if cost_usd > 0 and distance_km > 0:
+            annual_km = 19312
+            trips_per_year = min(annual_km / distance_km, 600)
+            annual_base = min(cost_usd * trips_per_year * 0.15, 2000.0)  # ~15% savings if improving, cap for short clips
+        else:
+            annual_base = 200.0  # fallback so we don't show all zeros
+
     # Score-dependent what-if: the worse your current score, the more room to improve.
-    # A driver at 90 smoothness gets near-zero projection; one at 20 gets a big one.
     smooth_factor = max(0, (90 - smooth) / 100) * 0.5
     anticipation_factor = max(0, (85 - anticipation) / 100) * 0.4
     efficiency_factor = max(0, (90 - efficiency) / 100) * 0.55
@@ -1640,6 +1651,10 @@ def main():
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     if not segment_out:
         (OUTPUT_DIR / "last_media_type.txt").write_text(media_type)
+        # Write per-run summary so the app always loads this run's data (fixes second-video wrong data)
+        if output_id:
+            SUMMARIES_DIR.mkdir(parents=True, exist_ok=True)
+            (SUMMARIES_DIR / f"{output_id}.json").write_text(json.dumps(summary, indent=2))
     print("Saved summary and", annotated_dst.name)
 
 

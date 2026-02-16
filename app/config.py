@@ -1,5 +1,6 @@
 """App config and constants."""
 import shutil
+import time
 from pathlib import Path
 
 # Project root (ecoRoadAI folder)
@@ -26,6 +27,25 @@ def ensure_video_dirs():
         d.mkdir(parents=True, exist_ok=True)
 
 
+def _safe_unlink(path, retries=3, delay=0.25):
+    """Unlink a file; on Windows retry on PermissionError (file in use)."""
+    for attempt in range(retries):
+        try:
+            path.unlink()
+            return True
+        except PermissionError:
+            if attempt < retries - 1:
+                time.sleep(delay)
+            else:
+                pass  # skip so clear can finish
+        except OSError as e:
+            if getattr(e, "winerror", None) == 32 and attempt < retries - 1:
+                time.sleep(delay)
+            else:
+                raise
+    return False
+
+
 def clear_video_dirs():
     """Remove all contents of uploads, output, detect, output_parallel. Call only when user clicks Clear."""
     for d in VIDEO_CLEANUP_DIRS:
@@ -36,9 +56,12 @@ def clear_video_dirs():
             if child.name == ".gitkeep":
                 continue
             if child.is_file():
-                child.unlink()
+                _safe_unlink(child)
             else:
-                shutil.rmtree(child, ignore_errors=True)
+                try:
+                    shutil.rmtree(child, ignore_errors=True)
+                except PermissionError:
+                    pass
         d.mkdir(parents=True, exist_ok=True)
 
 # MIME types for annotated video (ecoroad keeps source extension, e.g. .mov)
